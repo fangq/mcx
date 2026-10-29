@@ -250,19 +250,21 @@ def meanscat(detp, prop):
 
     Returns
     -------
-    avgnscat : float
-        The scattering event counts of all media, summed and averaged over the detected
-        photons with their weights (from :func:`detweight`) as the weighting.
+    avgnscat : ndarray, shape (nmedia,)
+        The scattering event count in each medium, averaged over the detected photons
+        with their weights (from :func:`detweight`) as the weighting; ``avgnscat.sum()``
+        is the average total count.
 
     Notes
     -----
-    Ported from mcxmeanscat.m by Fan-Yu Yen; unlike the MATLAB function, which returns one
-    average per medium, the counts of all media are summed.
+    Ported from mcxmeanscat.m by Fan-Yu Yen.
     """
     detw = detweight(detp, prop)
-    avgnscat = np.sum(
-        np.array(detp["nscat"], dtype=float) * detw[:, np.newaxis]
-    ) / np.sum(detw)
+    nscat = np.array(detp["nscat"], dtype=float)
+    nscat = nscat.reshape(
+        nscat.shape[0], -1
+    )  # one row per photon, one column per medium
+    avgnscat = np.sum(nscat * detw[:, np.newaxis], axis=0) / np.sum(detw)
 
     return avgnscat
 
@@ -602,10 +604,11 @@ def mcxlab(*args):
         The simulation configuration (see ``pmcx.run``), or ``'gpuinfo'`` to list the
         GPUs, or ``'version'`` to return the version string.
     option : str, optional
-        ``'opencl'`` to run with pmcxcl (OpenCL) instead of pmcx (CUDA), or ``'preview'`` to
-        plot the domain, sources and detectors without simulating. Without it, the backend is
-        set by a ``USE_MCXCL`` variable in the user's session (1: OpenCL, default 0); pmcxcl
-        is also used when pmcx has no CUDA binary on this platform.
+        ``'opencl'`` to run with pmcxcl (OpenCL), ``'cuda'`` to run with pmcx (CUDA), or
+        ``'preview'`` to plot the domain, sources and detectors without simulating. Without
+        ``'opencl'``/``'cuda'``, the backend is set by a ``USE_MCXCL`` variable in the user's
+        session (1: OpenCL, default 0), and pmcxcl is also used when pmcx has no CUDA binary
+        on this platform; ``'cuda'`` raises ImportError instead.
 
     Returns
     -------
@@ -657,14 +660,23 @@ def mcxlab(*args):
 
     useopencl = defaultocl
 
-    # the backend must be chosen before importing run(), so read option='opencl' first
+    # the backend must be chosen before importing run(), so read option='opencl'/'cuda' first;
+    # as in mcxlab.m, the option overrides USE_MCXCL
+    usecuda = len(args) == 2 and isinstance(args[1], str) and args[1] == "cuda"
     if len(args) == 2 and isinstance(args[1], str) and args[1] == "opencl":
         useopencl = 1
+    elif usecuda:
+        useopencl = 0
 
     if useopencl == 0:
         try:
             from _pmcx import gpuinfo, run, version
         except ImportError:
+            if usecuda:
+                raise ImportError(
+                    "option 'cuda' needs the pmcx (CUDA) binary extension (_pmcx), which is "
+                    "not available on this platform; use 'opencl' with pmcxcl instead"
+                )
             # no CUDA build of pmcx (e.g. the pure-python wheel on macOS): use pmcxcl if present
             try:
                 from _pmcxcl import gpuinfo, run, version

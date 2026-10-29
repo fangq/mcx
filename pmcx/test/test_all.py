@@ -96,12 +96,19 @@ class TestPMCXUtils(unittest.TestCase):
 
     def test_meanscat(self):
         """Test meanscat calculation"""
-        from pmcx.utils import meanscat
+        from pmcx.utils import meanscat, detweight
 
         avg_nscat = meanscat(self.detp_data, self.basic_prop)
 
-        self.assertTrue(avg_nscat > 0)
-        self.assertIsInstance(avg_nscat, (float, np.floating))
+        # one weighted average per medium, as mcxmeanscat.m
+        self.assertEqual(avg_nscat.shape, (2,))
+        self.assertTrue(np.all(avg_nscat > 0))
+        detw = detweight(self.detp_data, self.basic_prop)
+        np.testing.assert_allclose(
+            avg_nscat,
+            (self.detp_data["nscat"] * detw[:, None]).sum(0) / detw.sum(),
+            rtol=1e-6,
+        )
 
     def test_dettime(self):
         """Test dettime calculation"""
@@ -306,6 +313,41 @@ class TestPMCXUtils(unittest.TestCase):
             self.assertGreater(g1.shape[0], 0)
 
 
+class TestPMCXFrontend(unittest.TestCase):
+    """the option handling of pmcx.mcxlab and pmcx.preview"""
+
+    def test_mcxlab_cuda_needs_pmcx_binary(self):
+        """mcxlab(cfg, 'cuda') does not fall back to pmcxcl when _pmcx is missing"""
+        from pmcx.utils import mcxlab
+
+        with patch.dict(
+            sys.modules, {"_pmcx": None}
+        ):  # import _pmcx raises ImportError
+            with self.assertRaises(ImportError) as err:
+                mcxlab({"nphoton": 10}, "cuda")
+
+        self.assertIn("cuda", str(err.exception))
+
+    def test_preview_keeps_cfg(self):
+        """preview does not replace the 4-D vol of the caller's cfg"""
+        try:
+            import matplotlib
+
+            matplotlib.use("Agg")
+            import matplotlib.pyplot as plt
+            import iso2mesh  # noqa: F401
+        except ImportError:
+            self.skipTest("preview needs matplotlib and iso2mesh")
+
+        from pmcx.plot import preview
+
+        vol = np.ones([4, 6, 6, 6], dtype=np.uint8)
+        cfg = {"vol": vol, "srcpos": [3, 3, 0], "srcdir": [0, 0, 1], "issrcfrom0": 1}
+        preview(cfg)
+        plt.close("all")
+        self.assertIs(cfg["vol"], vol)
+
+
 class TestPMCXIO(unittest.TestCase):
     """Unit tests for pmcx.io module"""
 
@@ -317,7 +359,7 @@ class TestPMCXIO(unittest.TestCase):
     def create_temp_mc2_file(self, data, format_type="float"):
         """Helper to create temporary MC2 file"""
         temp_file = tempfile.NamedTemporaryFile(suffix=".mc2", delete=False)
-        temp_file.write(data.tobytes())
+        temp_file.write(data.tobytes(order="F"))  # mcx writes x fastest
         temp_file.close()
         return temp_file.name
 
@@ -333,6 +375,24 @@ class TestPMCXIO(unittest.TestCase):
             np.testing.assert_array_equal(loaded_data, self.test_data)
         finally:
             os.unlink(temp_file)
+
+    def test_loadmc2_x_fastest(self):
+        """loadmc2 reads x fastest, the order of the .mc2 files of mcx (and loadmc2.m)"""
+        from pmcx.io import loadmc2
+
+        temp_file = tempfile.NamedTemporaryFile(suffix=".mc2", delete=False)
+        temp_file.write(
+            np.arange(24, dtype=np.float32).tobytes()
+        )  # values in file order
+        temp_file.close()
+
+        try:
+            data = loadmc2(temp_file.name, [2, 3, 4], "float")
+            self.assertEqual(data[1, 0, 0], 1)  # the 2nd value is the next x
+            self.assertEqual(data[0, 1, 0], 2)
+            self.assertEqual(data[0, 0, 1], 6)
+        finally:
+            os.unlink(temp_file.name)
 
     def test_loadmc2_different_formats(self):
         """Test loadmc2 with different data formats"""
@@ -355,7 +415,7 @@ class TestPMCXIO(unittest.TestCase):
         # Create file with header + data
         header = b"HEADER" + b"\x00" * 10
         temp_file = tempfile.NamedTemporaryFile(suffix=".mc2", delete=False)
-        temp_file.write(header + self.test_data.tobytes())
+        temp_file.write(header + self.test_data.tobytes(order="F"))
         temp_file.close()
 
         try:
@@ -629,7 +689,7 @@ class TestIntegration(unittest.TestCase):
         # Create MC2 test data
         test_data = np.random.rand(5, 5, 5, 2).astype(np.float32)
         temp_mc2 = tempfile.NamedTemporaryFile(suffix=".mc2", delete=False)
-        temp_mc2.write(test_data.tobytes())
+        temp_mc2.write(test_data.tobytes(order="F"))
         temp_mc2.close()
 
         try:

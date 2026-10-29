@@ -55,8 +55,8 @@ def loadmc2(fname, dim, dataformat="float", offset=None):
     fname : str
         The file name.
     dim : list or tuple
-        The shape of the data, normally ``[nx, ny, nz, nt]``; the values are reshaped in
-        NumPy's default (row-major) order.
+        The shape of the data, normally ``[nx, ny, nz, nt]``; the file stores x fastest
+        (column-major), as mcx writes it and as ``pmcx.run`` returns it.
     dataformat : str, optional
         The data type: ``'float'`` (default), ``'float32'``, ``'single'``, ``'double'``,
         ``'float64'``, ``'uchar'``, ``'uint8'``, ``'int8'``, ``'uint16'``, ``'int16'``,
@@ -119,7 +119,7 @@ def loadmc2(fname, dim, dataformat="float", offset=None):
     fid.close()
 
     # Reshape data according to specified dimensions
-    data = data.reshape(dim)
+    data = data.reshape(dim, order="F")  # mcx writes x fastest, as loadmc2.m reads
 
     return data
 

@@ -106,11 +106,6 @@ def preview(cfg, **kwargs):
     ValueError
         If a required key is missing.
 
-    Notes
-    -----
-    A 4-D ``cfg['vol']`` (per-voxel properties) is replaced by an all-ones volume of the
-    same spatial size in the ``cfg`` passed in.
-
     Examples
     --------
     >>> pmcx.preview(pmcx.mcxcreate("spherebox"))
@@ -134,6 +129,9 @@ def preview(cfg, **kwargs):
     # Convert single dict to list for uniform processing
     if isinstance(cfg, dict):
         cfg = [cfg]
+    cfg = [
+        dict(c) for c in cfg
+    ]  # shallow copies, so that the 4-D vol replacement below stays local
 
     length = len(cfg)
     hs = [None] * length
