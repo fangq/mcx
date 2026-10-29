@@ -32,6 +32,7 @@
 @brief   mex function for MCXLAB
 *******************************************************************************/
 
+#include <cctype>
 #include <cerrno>
 #include <stdio.h>
 #include <string.h>
@@ -70,12 +71,13 @@ static void mcxlab_throw(const char* msg) {
 /**
  * The messages mcxlab prints while it reads cfg (the echo of the fields, the progress lines and
  * the warnings) go where cfg.flog sends the simulation log: the MATLAB/Octave console (mexPrintf)
- * for 2 (default), the stdout of the process for 1 and 0, or the log file; '/dev/null' or 'NUL'
+ * for 2 (default), the stdout of the process for 1 and 0, or the log file; 'none'
  * silences everything. The errors and the usage are always printed to the console.
  */
 /**
- * 'NUL' (any case) and '/dev/null' name the null device on every OS: cfg.flog='NUL' on Linux
- * or macOS wrote, or failed to write, a file of that name (fangq/mcx#280)
+ * cfg.flog='none' (any case) silences the log; '/dev/null' and 'NUL', the null devices of
+ * Linux/macOS and of Windows, are accepted on every OS too: cfg.flog='NUL' on Linux or macOS
+ * wrote, or failed to write, a file of that name (fangq/mcx#280)
  */
 static const char* mcx_logpath(const char* path) {
 #ifdef _WIN32
@@ -83,10 +85,19 @@ static const char* mcx_logpath(const char* path) {
 #else
     const char* nulldev = "/dev/null";
 #endif
+    const char* names[] = {"none", "nul"};
+    int i, j;
 
-    if (strcmp(path, "/dev/null") == 0 || ((path[0] == 'N' || path[0] == 'n') && (path[1] == 'U' || path[1] == 'u')
-                                           && (path[2] == 'L' || path[2] == 'l') && path[3] == '\0')) {
+    if (strcmp(path, "/dev/null") == 0) {
         return nulldev;
+    }
+
+    for (i = 0; i < 2; i++) {
+        for (j = 0; names[i][j] && tolower((unsigned char)path[j]) == names[i][j]; j++);
+
+        if (names[i][j] == '\0' && path[j] == '\0') {
+            return nulldev;
+        }
     }
 
     return path;
@@ -377,7 +388,7 @@ static void mcxlab_main(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs
             }
 
             /** the progress bar is written to the console, not to the log: drop it when the log is the
-                null device, so that cfg.flog='/dev/null' or 'NUL' silences everything */
+                null device, so that cfg.flog='none' silences everything */
             if (mcxlab_lognull) {
                 cfg.debuglevel &= ~MCX_DEBUG_PROGRESS;
             }

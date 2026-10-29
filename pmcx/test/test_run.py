@@ -53,7 +53,7 @@ def cfg(**kw):
         prop=PROP,
         issrcfrom0=1,
         seed=12345,
-        flog="NUL" if sys.platform.startswith("win") else "/dev/null",
+        flog="none",
     )
     c.update(kw)
     return c
@@ -292,7 +292,7 @@ class TestInterface(unittest.TestCase):
         self.assertGreater(ndet, 0)
 
     def test_flog_null_device_is_silent(self):
-        """'NUL' and '/dev/null' are the null device on every OS: nothing is printed, not even the
+        """flog='none' silences the log on every OS ('NUL' and '/dev/null' too): nothing is printed, not even the
         cfg echo or the progress bar, and no file is written, also from a read-only folder
         (fangq/mcx#280); without flog, the log is printed"""
         import tempfile
@@ -321,7 +321,7 @@ class TestInterface(unittest.TestCase):
             self.assertEqual(out.returncode, 0, out.stderr)
             return out.stdout + out.stderr, files
 
-        for name in ("NUL", "nul", "/dev/null"):
+        for name in ("none", "None", "NONE", "NUL", "/dev/null"):
             with self.subTest(flog=name):
                 text, files = run({"flog": name})
                 self.assertEqual(text.strip(), "")

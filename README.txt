@@ -232,8 +232,8 @@ lists all of them, with their commit hashes.
 * [7dc7cd1] uint32/float32 label volumes passed as 32-bit labels; unknown media formats rejected
 * [69423cb] an empty field of a cfg struct array keeps its default; it was read as 0 (e.g. `isreflect`)
 * [1190acf] any numeric class (`gpuid=int32(1)` failed), logical volumes and column vectors are accepted
-* [6b1dbb7] `cfg.flog` also controls the echo of the cfg fields: '/dev/null' or 'NUL' silences everything
-* [b521bfe] `cfg.flog='NUL'` and `'/dev/null'` silence the log on every OS; 'NUL' wrote a file on Linux (#280)
+* [6b1dbb7] `cfg.flog` also controls the echo of the cfg fields: 'none' silences everything
+* [b521bfe] `cfg.flog='none'` silences the log on every OS ('NUL' and '/dev/null' are accepted too; 'NUL' wrote a file on Linux, #280)
 * [3d52135, ae2dfcf] pmcx: `loadmc2` reads x fastest, `meanscat` per medium, `mcxlab(cfg,'cuda')`, and
   the outputs of several patterns are split by pattern
 * [1a2af0d] pmcx: NumPy-style docstrings; `help(pmcx.run)` lists every cfg key and output

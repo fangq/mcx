@@ -32,6 +32,7 @@
 @brief   Python interface using Pybind11 for MCX
 *******************************************************************************/
 #define PYBIND11_DETAILED_ERROR_MESSAGES
+#include <cctype>
 #include <cerrno>
 #include <cstring>
 #include <vector>
@@ -419,8 +420,9 @@ void parseVolume(const py::dict& user_cfg, Config& mcx_config) {
  * the stdout of the process for 1 and 0, the log file, or nowhere for os.devnull
  */
 /**
- * 'NUL' (any case) and '/dev/null' name the null device on every OS: cfg.flog='NUL' on Linux
- * or macOS wrote, or failed to write, a file of that name (fangq/mcx#280)
+ * cfg.flog='none' (any case) silences the log; '/dev/null' and 'NUL', the null devices of
+ * Linux/macOS and of Windows, are accepted on every OS too: cfg.flog='NUL' on Linux or macOS
+ * wrote, or failed to write, a file of that name (fangq/mcx#280)
  */
 static const char* mcx_logpath(const char* path) {
 #ifdef _WIN32
@@ -428,10 +430,19 @@ static const char* mcx_logpath(const char* path) {
 #else
     const char* nulldev = "/dev/null";
 #endif
+    const char* names[] = {"none", "nul"};
+    int i, j;
 
-    if (strcmp(path, "/dev/null") == 0 || ((path[0] == 'N' || path[0] == 'n') && (path[1] == 'U' || path[1] == 'u')
-                                           && (path[2] == 'L' || path[2] == 'l') && path[3] == '\0')) {
+    if (strcmp(path, "/dev/null") == 0) {
         return nulldev;
+    }
+
+    for (i = 0; i < 2; i++) {
+        for (j = 0; names[i][j] && tolower((unsigned char)path[j]) == names[i][j]; j++);
+
+        if (names[i][j] == '\0' && path[j] == '\0') {
+            return nulldev;
+        }
     }
 
     return path;
@@ -974,7 +985,7 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
     }
 
     /* the progress bar is written to the terminal, not to the log: drop it when the log is the
-       null device, so that cfg['flog']='/dev/null' or 'NUL' silences everything */
+       null device, so that cfg['flog']='none' silences everything */
     if (pyecho_lognull) {
         mcx_config.debuglevel &= ~MCX_DEBUG_PROGRESS;
     }
@@ -1952,9 +1963,8 @@ static const char* pmcx_run_doc_lines[] = {
     "        A name for the output files.\n",
     "    flog : int or str\n",
     "        Where the messages go: [2] sys.stdout, 1 the stdout of the process, 0 the\n",
-    "        same without the banner, or a file name (appended); '/dev/null' or 'NUL'\n",
-    "        (either, on any OS) silences everything, the progress bar included. Errors\n",
-    "        are always raised.\n",
+    "        same without the banner, or a file name (appended); 'none' silences\n",
+    "        everything, the progress bar included. Errors are always raised.\n",
     "    lang : str\n",
     "        Language of the log: zh_CN, zh_TW, ja_JP, fr_CA, es_MX, de_DE, ko_KR, hi_IN\n",
     "        or pt_BR.\n",
