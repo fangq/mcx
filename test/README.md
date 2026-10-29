@@ -24,7 +24,9 @@ cd test
 Each box-shaped case under `traj_cases/` runs with a fixed seed and one photon
 per GPU thread (`-A 0 -t <photons> -T 1 -D M`), so every photon draws from its
 own reproducible random number stream and the saved trajectory is
-deterministic. MCX-CL derives the per-thread seeds in the same way.
+deterministic. The per-thread seeds come from the seed by the xorshift128+
+generator of the kernels, not the C library `rand()`, so the same golden files
+apply on Linux, macOS and Windows; MCX-CL derives the seeds in the same way.
 `trajtest.py` then checks every recorded step against physical
 invariants:
 

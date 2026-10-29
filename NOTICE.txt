@@ -64,6 +64,10 @@ cite the relevant papers in your publications.
 
 === MMC ===
 
+[Yan2026] Shijie Yan, Douglas Dwyer, David R. Kaeli, Qianqian Fang, "Accelerating mesh-based Monte Carlo simulations using contemporary graphics ray-tracing hardware," J. of Biomedical Optics, 31(3), 035002 (2026)
+*Summary: RT-MMC, MMC accelerated by the ray-tracing hardware (NVIDIA OptiX) of modern GPUs
+*Download: https://doi.org/10.1117/1.JBO.31.3.035002
+
 [Zhang2022] Yuxuang Zhang, Qianqian Fang, "BlenderPhotonics – an integrated open-source software environment for three-dimensional meshing and photon simulations in complex tissues," J. of Biomedical Optics, 27(8), 083014 (2022)
 *Summary: BlenderPhotonics
 *Download: https://doi.org/10.1117/1.JBO.27.8.083014
@@ -94,6 +98,10 @@ cite the relevant papers in your publications.
 
 === General MC algorithm ===
 
+[Hirvi2026] Pauliina Hirvi, Jaakko Olkkonen, Qianqian Fang, Ilkka Nissilä, "Computation of frequency- and time-domain Jacobians in optical tomography with Monte Carlo simulations," arXiv:2604.27558 (2026), preprint
+*Summary: frequency- and time-domain (RF/TD) Jacobians of mua and mus in MCX
+*Download: https://arxiv.org/abs/2604.27558
+
 [Hirvi2023] Hirvi P, Kuutela T, Fang Q, Hannukainen A, Hyvonen N, Nissilä I. Effects of atlas-based anatomy on modelled light transport in the neonatal head. Phys Med Biol. 2023 May 11. doi: 10.1088/1361-6560/acd48c. PMID: 37167982.
 *Summary: RF replay and neonatal brain atlas
 *Download: https://doi.org/10.1088/1361-6560/acd48c
@@ -123,6 +131,10 @@ cite the relevant papers in your publications.
 *Download: https://www.osapublishing.org/boe/abstract.cfm?uri=boe-7-1-171
 
 === Applications ===
+
+[Lewis2025] Aiden Vincent Lewis, Qianqian Fang, "Revisiting equivalent optical properties for cerebrospinal fluid to improve diffusion-based modeling accuracy in the brain," Neurophotonics, 12(1), 015009 (2025)
+*Summary: equivalent CSF optical properties for diffusion-based brain modeling
+*Download: https://doi.org/10.1117/1.NPh.12.1.015009
 
 [Yuan2020] Yaoshen Yuan, Paolo Cassano, Matthew Pias, Qianqian Fang*, (2020) "Transcranial photobiomodulation with near-infrared light from childhood to elderliness: simulation of dosimetry,", Neurophotonics, 7(1), 015009
 *Summary: PBM dosage over lifespan

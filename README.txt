@@ -96,7 +96,7 @@ Notable new features include:
   macOS, linked against `liboctmex` and loadable in Octave 10 and newer
 * unit tests and coverage: host-side unit tests of `mcx_utils` (JSON and .inp parsing,
   JData decoding, shapes, Mie, output writers) and of the ray-tracing helpers (`make
-  unittest`, 1735 checks, no GPU needed) raise the line coverage of the host code to
+  unittest`, 1782 checks, no GPU needed) raise the line coverage of the host code to
   about 95%; 141 built-in example tests (`test/testbuiltin.sh`), exported from all
   examples and mcxlab demos, check every run against golden values; the bugs these tests
   found were fixed
@@ -135,8 +135,11 @@ This release also contains a number of bug fixes, including
 * fixed `make volta`/`make ampere` etc. compiling for sm_30
 * the host-generated RNG seeds had ~75% of their bits set on Linux and macOS, which
   biased the first photon of each GPU thread; the absorbed fraction drifted by up to
-  0.25% with the thread count. Seeds are now uniform, which changes the random
-  streams for a given seed (replay of saved seeds is unaffected)
+  0.25% with the thread count. The per-thread seeds are now derived from the seed
+  (`-E`) by the xorshift128+ generator of the kernels instead of the C library `rand()`,
+  which differs between Linux, macOS and Windows, so a fixed seed simulates the same
+  photons on every OS; this changes the random streams for a given seed (replay of saved
+  seeds is unaffected)
 * Stokes vectors are now written to trajectory files with `--trajstokes 1`
 * fixed crashes when saving detected photons from `asgn_float`, `mixlabel` and
   `labelplus` volumes, and when reading a JSON detector with a `Dir` field
@@ -196,7 +199,8 @@ lists all of them, with their commit hashes.
 * [edbb667] fixes for the crashes, hangs and memory errors that fuzzing mcx-cl found in the shared code
 
 '''Bug fixes'''
-* [a29ed84] host RNG seeds had ~75% of their bits set, biasing each thread's first photon; now uniform
+* [a29ed84, 60e56dd] host RNG seeds had ~75% of their bits set, biasing each thread's first photon;
+  now derived with xorshift128+, uniform and the same on every OS
 * [1be8bad, 1877f40, 585f607, 78618aa] replay normalization fixes; `-U 2` skips only the detected-weight
   normalization (#263)
 * [5eea2af] 2^24 cap in wp/dcs/wptof replay outputs; [06212d2] replaydet=-1 in nscat/wp/wptof/rfmus (#255)
@@ -1626,6 +1630,9 @@ list is maintained at https://mcx.space/#publications.
 
 '''Features'''
 
+* [Hirvi2026] Pauliina Hirvi, Jaakko Olkkonen, Qianqian Fang, Ilkka Nissilä, "Computation
+  of frequency- and time-domain Jacobians in optical tomography with Monte Carlo
+  simulations," arXiv:2604.27558 (2026), preprint. https://arxiv.org/abs/2604.27558
 * [Yao2018] Ruoyang Yao, Xavier Intes, Qianqian Fang, "A direct approach to compute
   Jacobians for diffuse optical tomography using perturbation Monte Carlo-based
   photon 'replay'," Biomed. Opt. Express, 9(10), 4588-4603 (2018).
@@ -1651,6 +1658,9 @@ list is maintained at https://mcx.space/#publications.
 
 '''Mesh-based Monte Carlo (MMC)''', for the related mesh-based simulator
 
+* Shijie Yan, Douglas Dwyer, David R. Kaeli, Qianqian Fang, "Accelerating mesh-based
+  Monte Carlo simulations using contemporary graphics ray-tracing hardware," J.
+  Biomed. Opt. 31(3), 035002 (2026), RT-MMC. https://doi.org/10.1117/1.JBO.31.3.035002
 * Qianqian Fang, "Mesh-based Monte Carlo method using fast ray-tracing in Plücker
   coordinates," Biomed. Opt. Express, 1(1), 165-175 (2010).
   https://opg.optica.org/boe/abstract.cfm?uri=boe-1-1-165

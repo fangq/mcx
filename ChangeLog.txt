@@ -3,6 +3,35 @@
 Major updates are marked with a "*"
 
 == MCX v2026 (Lucky Lux - 3.0), FangQ <q.fang (a) neu.edu> ==
+ 2026-10-28 [2ef13a3] [clean] the host RNG with uint64_t, not long long (C++98 -pedantic warnings)
+ 2026-10-28 [725ab89] [test] suppress glibc's ld.so strncmp report in the valgrind check
+ 2026-10-28 [0a0bff4] [test] testbuiltin.sh runs where timeout is gtimeout or missing (macOS), as in mmc
+ 2026-10-28 [60e56dd] [feat] derive the per-thread seeds with xorshift128+ instead of the C library rand()
+ 2026-10-28 [02195b1] [clean] fermioct: the link flags in LDFLAGS, mkoctfile's LFLAGS is deprecated
+ 2026-10-28 [9e36f41] [clean] _is_bigendian(void), as in mcxcl and mmc (-Wstrict-prototypes)
+ 2026-10-28 [e067f06] [clean] %lld for the long long array dimensions of Octave (-Wformat)
+ 2026-10-28 [f8911ac] [ci] macOS Octave mex: no path to the build machine's liboctmex or libstdc++
+ 2026-10-28 [e6973fc] [ci] build the Windows mex and binary with CUDA 9.2, the CUDA 10.2 mex broke MATLAB
+ 2026-10-28 [ec10951] [ci] installer: read the Inno Setup version from its installation
+ 2026-10-28 [8a35bf5] [ci] installer: print the Inno Setup version, fall back to the 6.4.3 translations
+ 2026-10-28 [45488e3] [ci] installer: match the Chinese translations to the installed Inno Setup, use x64compatible
+ 2026-10-28 [5d3e300] [ci] installer: fetch the unofficial Chinese translations of the installed Inno Setup
+ 2026-10-28 [76faedf] [ci] build the MCX Studio Windows installer from the portable package
+ 2026-10-28 [edc1953] [ci] leave the redbird package to redbird's own CI
+ 2026-10-28 [5ef2090] [ci] bundle redbird's manual (a submodule) in the redbird package
+ 2026-10-28 [3c8702c] [bug] stop polling the progress bar once the kernel completes
+ 2026-10-28 [ab3690d] [test] feature tests: JData block index, detector masks, validation, host paths
+ 2026-10-28 [e2321c0] [bug] report the -H limit, not --maxjumpdebug, when more photons are detected
+ 2026-10-27 [7cb7241] [doc] What's New: lead with adjoint Jacobians and FD/RF forward and Jacobians
+ 2026-10-27 [1e059bc] [clean] fix gcc and clang warnings shared with mcx-cl and mmc
+ 2026-10-27 [1f135ad] [bug] mcxlab: echo cfg.flog as 1 or 2, not the FILE pointer, as mcxlabcl
+ 2026-10-27 [f08c34d] [build] rebuild the bundled zmat when its sources change
+ 2026-10-27 [74b14e3] [doc] mcxplotphotons: rtmmc-vulkan is renamed to vkmmc
+ 2026-10-27 [fba2f03] [feat] adjoint mode: only simulate and store the sources and detectors in cfg.sdmap
+ 2026-10-27 [ffcb763] [bug] mcxlab: raise errors in MATLAB instead of aborting it, refs fangq/mcx#278
+ 2026-10-27 [c19b989] [feat] pmcx: accept a 3-column cfg['detdir'], as mcxlab and cfg['srcdir']
+ 2026-10-27 [be4ba67] [feat] mcxlab: accept a 3-column cfg.detdir, as cfg.srcdir
+ 2026-10-27 [9958f7d] [doc] README and ChangeLog: the shared bugs found by fuzzing mcx-cl
  2026-10-27 [edbb667] [bug] fix crashes, hangs and memory errors found by fuzzing mcx-cl
  2026-10-27 [e5be630] [bug] USE_FIXEDPOINT: bound the fixed-point scale by 1/mua in forward runs
  2026-10-26 [3ddbbfa] [doc] README: fixed-point output sums (make fixed), test/fuzz/dfuzz.py and the new testmcx.sh checks
