@@ -216,9 +216,11 @@ lists all of them, with their commit hashes.
 * [641581a] `test/fuzz/dfuzz.py`: mutation fuzzing of the built-in inputs and options, optionally
   differential against a reference build; [45fafd5] with the built-in examples, the tests reach every output deposit path
 * [edbb667] fixes for the crashes, hangs and memory errors that fuzzing mcx-cl found in the shared code
+* [f8e3b65, 8f985de] unit tests of the mcxlab and pmcx interfaces: input types, every output and source
+  type, and short absorbed-fraction checks against 1e7-photon references
 
 **Bug fixes**
-* [a29ed84, 60e56dd] host RNG seeds had ~75% of their bits set, biasing each thread's first photon;
+* [a29ed84, bc7a88b] host RNG seeds had ~75% of their bits set, biasing each thread's first photon;
   now derived with xorshift128+, uniform and the same on every OS
 * [1be8bad, 1877f40, 585f607, 78618aa] replay normalization fixes; `-U 2` skips only the detected-weight
   normalization (#263)
@@ -235,6 +237,10 @@ lists all of them, with their commit hashes.
 * [06fab97, 04eff9c, e3fe174] `--dumpjson`, mcx2json and json2mcx round-trip all settings
 * [211fef6] `cfg.flog` honored wherever it appears in cfg; pmcx without `tstep` gives one time gate
 * [bec9b10] `make volta`/`make ampere` etc. compiled for sm_30
+* [b9359d5] per-voxel media (mua_float, muamus_float, asgn_float, labelplus) scaled mua/mus by
+  `unitinmm` twice when `cfg.unitinmm` was set before `cfg.vol`; labelplus scaled mus/g, not mua/mus
+* [367bf27] polarized runs without `srciquv` failed at random (an uninitialized Stokes vector);
+  `srcdir(4)` = nan (isotropic) or -inf (Lambertian) now also applies to pencil beams, as in mcx-cl
 
 **MCXLAB and PMCX**
 * [4959eeb] the mcxlab help rewritten to document every cfg field
@@ -243,6 +249,12 @@ lists all of them, with their commit hashes.
 * [e1875a1] `pmcx.mcxlab` honors `'opencl'` and falls back to pmcxcl (fangq/mcxcl#60)
 * [ca9d15b] pmcx on macOS installs as a pure-python package with the utility functions
 * [7dc7cd1] uint32/float32 label volumes passed as 32-bit labels; unknown media formats rejected
+* [69423cb] an empty field of a cfg struct array keeps its default; it was read as 0 (e.g. `isreflect`)
+* [1190acf] any numeric class (`gpuid=int32(1)` failed), logical volumes and column vectors are accepted
+* [6b1dbb7] `cfg.flog` also controls the echo of the cfg fields: '/dev/null' or 'NUL' silences everything
+* [3d52135, ae2dfcf] pmcx: `loadmc2` reads x fastest, `meanscat` per medium, `mcxlab(cfg,'cuda')`, and
+  the outputs of several patterns are split by pattern
+* [1a2af0d] pmcx: NumPy-style docstrings; `help(pmcx.run)` lists every cfg key and output
 
 **Build and packaging**
 * [f36e4e3] Linux releases built in manylinux2014 (glibc 2.17+); [40c276e] Octave mex files for macOS
