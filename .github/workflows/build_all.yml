@@ -311,6 +311,12 @@ jobs:
           cd src
           make unittest
           rm -f ../bin/mcx_unittest
+      - name: Run the pmcx unit tests (Linux only; the simulations are skipped without a GPU)
+        if: ${{ runner.os == 'Linux' }}
+        run: |
+          python3 -m pip install numpy jdata bjdata || python3 -m pip install --break-system-packages numpy jdata bjdata
+          cd pmcx
+          PYTHONPATH=$PWD python3 -m unittest discover -s test -v
       - name: Build mcxstudio
         # macOS: the build_mcxstudio_macos job (this one pins an old Xcode for CUDA)
         if: ${{ runner.os != 'macOS' }}
