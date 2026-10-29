@@ -3,6 +3,7 @@
 Major updates are marked with a "*"
 
 == MCX v2026 (Lucky Lux - 3.0), FangQ <q.fang (a) neu.edu> ==
+ 2026-10-29 [b521bfe]*[bug] cfg.flog: 'NUL' and '/dev/null' are the null device on every OS, refs fangq/mcx#280
  2026-10-29 [8f985de] [test] binding tests of every source type, launch angles, polarized runs, input types
  2026-10-29 [1190acf]*[bug] mcxlab/pmcx: accept any numeric class and column vectors, debuglevel 'T', unknown commands
  2026-10-29 [367bf27]*[bug] polarized runs default to an unpolarized source, normalizer, nan/-inf launch of pencil beams
