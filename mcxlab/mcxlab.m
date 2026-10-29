@@ -449,11 +449,6 @@ if (isstruct(varargin{1}))
                 varargin{1}(i).(castlist{j}) = double(varargin{1}(i).(castlist{j}));
             end
         end
-        if (isfield(varargin{1}(i), 'vol') && ndims(varargin{1}(i).vol) == 4)
-            if ((isa(varargin{1}(i).vol, 'single') || isa(varargin{1}(i).vol, 'double')) && isfield(varargin{1}(i), 'unitinmm'))
-                varargin{1}(i).vol = varargin{1}(i).vol * varargin{1}(i).unitinmm;
-            end
-        end
         if (~isfield(varargin{1}(i), 'tstart'))
             varargin{1}(i).tstart = 0;
         end
@@ -538,9 +533,6 @@ if (nargout >= 2)
         end
         if (ndims(cfg(i).vol) == 4 && size(cfg(i).vol, 1) ~= 8)
             cfg(i).savedetflag = '';
-            if ((isa(cfg(i).vol, 'single') || isa(cfg(i).vol, 'double')) && isfield(cfg(i), 'unitinmm'))
-                cfg(i).vol = cfg(i).vol * cfg(i).unitinmm;
-            end
         end
         if ((~isfield(cfg(i), 'issaveexit') || cfg(i).issaveexit ~= 2))
             medianum = size(cfg(i).prop, 1) - 1;

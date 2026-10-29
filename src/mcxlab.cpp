@@ -199,7 +199,7 @@ static void mcxlab_main(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs
     Config cfg;
     GPUInfo* gpuinfo = NULL;
     mxArray*    tmp;
-    int        ifield, jstruct;
+    int        ifield, jstruct, unitinmmidx;
     int        ncfg, nfields;
     dimtype    fielddim[6];
     int        activedev = 0;
@@ -331,11 +331,19 @@ static void mcxlab_main(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs
             printf("Running simulations for configuration #%d ...\n", jstruct + 1);
             detps = NULL;
 
+            /** cfg.unitinmm before cfg.vol, whatever the field order: the per-voxel media formats
+                scale their mua/mus (1/mm) by it as the volume is read */
+            unitinmmidx = mxGetFieldNumber(prhs[0], "unitinmm");
+
+            if (unitinmmidx >= 0 && (tmp = mxGetFieldByNumber(prhs[0], jstruct, unitinmmidx)) != NULL) {
+                mcx_set_field(prhs[0], tmp, unitinmmidx, &cfg);
+            }
+
             /** Read each struct element from input and set value to the cfg configuration */
             for (ifield = 0; ifield < nfields; ifield++) { /* how many input struct fields */
                 tmp = mxGetFieldByNumber(prhs[0], jstruct, ifield);
 
-                if (tmp == NULL) {
+                if (tmp == NULL || ifield == unitinmmidx) {
                     continue;
                 }
 
@@ -1183,14 +1191,14 @@ void mcx_set_field(const mxArray* root, const mxArray* item, int idx, Config* cf
 
                 for (i = 0; i < dimxyz; i++) {
                     f2bh.f[2] = val[i * 3];        // mua/mus/g or n float-value, depending on f[1]
-                    f2bh.f[1] = val[i * 3 + 1];    // if it has value 1-4, it replaces the 1st (mua), 2nd (mus), 3rd (g), 4th (n) value of the label by f[2]
+                    f2bh.f[1] = val[i * 3 + 1];    // 0-3: f[2] replaces the mua (0), mus (1), g (2) or n (3) of the label, as the kernel decodes it
                     f2bh.f[0] = val[i * 3 + 2];    // voxel label
 
                     if (f2bh.f[1] < 0.f || f2bh.f[1] >= 4.f || f2bh.f[0] < 0.f ) {
                         mexErrMsgTxt("the 2nd volume must have an integer value between 0 and 3");
                     }
 
-                    if (f2bh.f[1] >= 1.f && f2bh.f[1] <= 2.f) { // if the values are mua or mus, scale by cfg->unitinmm
+                    if (f2bh.f[1] < 2.f) { // mua (0) or mus (1) in 1/mm: scale by unitinmm; not g (2) or n (3)
                         f2bh.f[2] *= cfg->unitinmm;
                     }
 

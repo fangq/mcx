@@ -292,14 +292,14 @@ void parseVolume(const py::dict& user_cfg, Config& mcx_config) {
 
                     for (i = 0; i < dim_xyz; i++) {
                         f2bh.f[2] = val[i * 3];        // mua/mus/g or n float-value, depending on f[1]
-                        f2bh.f[1] = val[i * 3 + 1];    // if it has value 1-4, it replaces the 1st (mua), 2nd (mus), 3rd (g), 4th (n) value of the label by f[2]
+                        f2bh.f[1] = val[i * 3 + 1];    // 0-3: f[2] replaces the mua (0), mus (1), g (2) or n (3) of the label, as the kernel decodes it
                         f2bh.f[0] = val[i * 3 + 2];    // voxel label
 
                         if (f2bh.f[1] < 0.f || f2bh.f[1] >= 4.f || f2bh.f[0] < 0.f) {
                             throw py::value_error("the 2nd volume must have an integer value between 0 and 3");
                         }
 
-                        if (f2bh.f[1] >= 1.f && f2bh.f[1] <= 2.f) { // if the values are mua or mus, scale by cfg->unitinmm
+                        if (f2bh.f[1] < 2.f) { // mua (0) or mus (1) in 1/mm: scale by unitinmm; not g (2) or n (3)
                             f2bh.f[2] *= mcx_config.unitinmm;
                         }
 
