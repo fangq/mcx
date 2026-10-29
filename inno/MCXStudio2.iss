@@ -97,7 +97,7 @@ Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Parameters: "--
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}";  Parameters: "--user --lang {code:GetLanguageCode}"; Tasks: desktopicon
 Name: "{group}\MCX Website"; Filename: "https://mcx.space/"
 Name: "{group}\MCX Wiki"; Filename: "https://mcx.space/wiki/"
-Name: "{group}\MCX Forum"; Filename: "https://groups.google.com/forum/?hl=en#!forum/mcx-users"
+Name: "{group}\MCX Forum"; Filename: "https://groups.google.com/g/mcx-users"
 
 ;;----------------------------------------------------------------------
 

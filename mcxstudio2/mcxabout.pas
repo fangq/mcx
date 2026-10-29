@@ -22,7 +22,7 @@ uses
 const
   { Studio's own version, which is not mcx's: a front end is released on its
     own clock, and a report saying only "mcx 2025" cannot be placed. }
-  McxStudioVersion = '2.0-alpha';
+  McxStudioVersion = '2.0-beta';
 
 { ADetails is the machine-specific part -- backend paths, the GL renderer --
   which the caller collects because only it knows them. }

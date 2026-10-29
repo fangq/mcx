@@ -58,7 +58,6 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "french"; MessagesFile: "compiler:Languages\French.isl"
 Name: "german"; MessagesFile: "compiler:Languages\German.isl"
 Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
-Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
 Name: "italian"; MessagesFile: "compiler:Languages\Italian.isl"
 Name: "japanese"; MessagesFile: "compiler:Languages\Japanese.isl"
 Name: "korean"; MessagesFile: "compiler:Languages\Korean.isl"
@@ -105,7 +104,7 @@ Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Parameters: "--
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Parameters: "--user"; Tasks: desktopicon
 Name: "{group}\MCX Website"; Filename: "https://mcx.space/"
 Name: "{group}\MCX Wiki"; Filename: "https://mcx.space/wiki/"
-Name: "{group}\MCX Forum"; Filename: "https://groups.google.com/forum/?hl=en#!forum/mcx-users"
+Name: "{group}\MCX Forum"; Filename: "https://groups.google.com/g/mcx-users"
 
 ;;----------------------------------------------------------------------
 
