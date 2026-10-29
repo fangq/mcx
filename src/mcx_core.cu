@@ -4058,6 +4058,11 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
             /** \c ispencil: template constant, if 1, launch photon code is dramatically simplified */
             int ispencil = (cfg->srctype == MCX_SRC_PENCIL && cfg->nangle == 0 && !(MCX_IS_ADJOINT_TYPE(cfg->outputtype) || cfg->srcid == -2));
 
+            /** an isotropic (srcdir.w=nan) or Lambertian (-inf) pencil beam needs the full launch code, as in mcx-cl */
+            if (isnan(cfg->srcdir.w) || (cfg->srcdir.w < 0.f && isinf(cfg->srcdir.w))) {
+                ispencil = 0;
+            }
+
             /** \c isref: template constant, if 1, perform boundary reflection, if 0, total-absorbion boundary, can simplify kernel */
             int isref = cfg->isreflect;
 

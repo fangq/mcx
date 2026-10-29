@@ -331,12 +331,15 @@ void mcx_initcfg(Config* cfg) {
 #endif
     cfg->omega = 0.f;
     cfg->lambda = 0.f;
+    memset(&(cfg->srciquv), 0, sizeof(float4)); /** unpolarized source, as mcx-cl; it was left uninitialized */
+    cfg->srciquv.x = 1.f;
     /*cfg->his=(History){{'M','C','X','H'},1,0,0,0,0,0,0,1.f,{0,0,0,0,0,0,0}};*/   /** This format is only supported by C99 */
     memset(&cfg->his, 0, sizeof(History));
     memcpy(cfg->his.magic, "MCXH", 4);
     cfg->his.version = 1;
     cfg->his.unitinmm = 1.f;
     cfg->his.normalizer = 1.f;
+    cfg->normalizer = 1.f;   /** stat.normalizer of a run without normalization; it was left uninitialized */
     cfg->his.respin = 1;
     cfg->his.srcnum = 1;
     cfg->savedetflag = 0x5;
