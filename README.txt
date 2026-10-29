@@ -715,8 +715,9 @@ Options taking a value accept it after a space; long options are written as
         RNG test
 `--maxjumpdebug n`
     Meaning: the most trajectory points saved
-`-l`, `--log`
-    Meaning: write the messages to `session.log`
+`-l [1|0]`, `--log`
+    Meaning: 1 (or `-l` alone): write the messages to `session.log`; 0: print them
+        without the banner
 `-y zh_CN`, `--lang`
     Meaning: print messages in another language (zh_CN, zh_TW, ja_JP, fr_CA, es_MX, de_DE,
         ko_KR, hi_IN, pt_BR)

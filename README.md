@@ -672,7 +672,7 @@ Options taking a value accept it after a space; long options are written as
 |---|---|
 | `-D P`, `--debug` | `P` progress bar, `M` save photon trajectories, `T` save trajectories only, `R` RNG test |
 | `--maxjumpdebug n` | the most trajectory points saved |
-| `-l`, `--log` | write the messages to `session.log` |
+| `-l [1\|0]`, `--log` | 1 (or `-l` alone): write the messages to `session.log`; 0: print them without the banner |
 | `-y zh_CN`, `--lang` | print messages in another language (zh_CN, zh_TW, ja_JP, fr_CA, es_MX, de_DE, ko_KR, hi_IN, pt_BR) |
 | `-v`, `--version` | print the version |
 

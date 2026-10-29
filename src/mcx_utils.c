@@ -7213,7 +7213,8 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  -h            (--help)        print this message\n\
  -y [zh_CN,..] (--lang)        select language, followed by nothing to print\n\
  -v            (--version)     print MCX revision number\n\
- -l            (--log)         print messages to a log file instead\n\
+ -l [1|0]      (--log)         1 or no value: messages to <session>.log;\n\
+                               0: print them on the screen without the banner\n\
  -i            (--interactive) interactive mode\n\
 \n"S_BOLD S_CYAN"\
 == Debug options ==\n" S_RESET"\
