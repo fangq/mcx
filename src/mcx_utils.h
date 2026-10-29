@@ -390,18 +390,39 @@ int mexEvalString(const char* command);
 #include <stdlib.h>
 
 /**
- * @brief Return 32 uniformly distributed random bits from the host rand(), used to seed the RNGs
+ * @brief The host random number generator that derives the per-thread seeds of the RNGs
  *
- * rand() returns 15 random bits with MSVC but 31 with glibc and macOS; OR-ing overlapping
- * shifted draws, as the seeds were built before, set ~75% of the bits on Linux/macOS, which
- * biased the first photon simulated by every thread. Masking each draw to 15 (resp. 2) bits
- * gives uniform bits for both, and separate statements fix the order of the three calls.
+ * The xorshift128+ generator of the GPU kernels, rather than the C library rand(): rand() is
+ * a different generator in glibc, macOS and MSVC, so that the same seed (-E) simulated other
+ * photons on each OS, and its state is shared by all threads. The 128-bit state is filled
+ * from the seed by splitmix64, so that small or consecutive seeds give unrelated states.
  */
-static inline unsigned int mcx_rand_uint32(void) {
-    unsigned int r = ((unsigned int)rand() & 0x7FFFU) << 17;
-    r |= ((unsigned int)rand() & 0x7FFFU) << 2;
-    r |= (unsigned int)rand() & 0x3U;
-    return r;
+typedef struct {
+    unsigned long long s[2];
+} MCXHostRNG;
+
+static inline void mcx_hostrng_seed(MCXHostRNG* rng, unsigned long long seed) {
+    int i;
+
+    for (i = 0; i < 2; i++) {
+        unsigned long long z = (seed += 0x9E3779B97F4A7C15ULL);
+        z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ULL;
+        z = (z ^ (z >> 27)) * 0x94D049BB133111EBULL;
+        rng->s[i] = z ^ (z >> 31);
+    }
+}
+
+/**
+ * @brief Return 32 random bits, the upper half of the next xorshift128+ output
+ */
+static inline unsigned int mcx_rand_uint32(MCXHostRNG* rng) {
+    unsigned long long s1 = rng->s[0];
+    const unsigned long long s0 = rng->s[1];
+
+    rng->s[0] = s0;
+    s1 ^= s1 << 23;
+    rng->s[1] = s1 ^ s0 ^ (s1 >> 18) ^ (s0 >> 5);
+    return (unsigned int)((rng->s[1] + s0) >> 32);
 }
 
 #endif

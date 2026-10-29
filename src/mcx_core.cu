@@ -3294,6 +3294,9 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     /** \c Pseed - per-thread RNG seed initialization host buffers */
     uint*   Pseed;
 
+    /** \c hostrng - the host RNG that fills Pseed, seeded per GPU thread */
+    MCXHostRNG hostrng;
+
     /** \c Pdet - output host buffer to store detected photon partial-path and other per-photon data */
     float*  Pdet;
 
@@ -3675,6 +3678,8 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     /** A 1D block is determined by the user specified block size, or by default, 64, determined emperically to get best performance */
     mcblock.x = gpu[gpuid].autoblock;
 
+    mcx_hostrng_seed(&hostrng, (unsigned long long)((cfg->seed > 0) ? cfg->seed : time(0)) + threadid);
+
     /** If "-D R" is used, we launch a special RNG testing kernel to retrieve random numbers from RNG and test for randomness */
     if (cfg->debuglevel & MCX_DEBUG_RNG) {
         #pragma omp master
@@ -3685,7 +3690,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
             Pseed = (uint*)malloc(sizeof(RandType) * RAND_BUF_LEN);
 
             for (i = 0; i < (int)(((sizeof(RandType)*RAND_BUF_LEN) >> 2)); i++) {
-                Pseed[i] = mcx_rand_uint32();
+                Pseed[i] = mcx_rand_uint32(&hostrng);
             }
 
             CUDA_ASSERT(cudaMalloc((void**) &gPseed, sizeof(RandType)*RAND_BUF_LEN));
@@ -3875,12 +3880,6 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
     memcpy(&(param.bc), cfg->bc, 12);
     Vvox = cfg->steps.x * cfg->steps.y * cfg->steps.z; /*Vvox: voxel volume in mm^3*/
 
-    if (cfg->seed > 0) {
-        srand(cfg->seed + threadid);
-    } else {
-        srand(time(0) + threadid);
-    }
-
     for (i = 0; i < gpu[gpuid].autothread; i++) {
         Ppos[i] = p0; // initial position
         Pdir[i] = c0;
@@ -4026,7 +4025,7 @@ void mcx_run_simulation(Config* cfg, GPUInfo* gpu) {
 
             if (cfg->seed != SEED_FROM_FILE) {
                 for (i = 0; i < gpu[gpuid].autothread * ((int)(sizeof(RandType)*RAND_BUF_LEN) >> 2); i++) {
-                    Pseed[i] = mcx_rand_uint32();
+                    Pseed[i] = mcx_rand_uint32(&hostrng);
                 }
 
                 CUDA_ASSERT(cudaMemcpy(gPseed, Pseed, sizeof(RandType)*gpu[gpuid].autothread * RAND_BUF_LEN,  cudaMemcpyHostToDevice));
