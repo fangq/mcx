@@ -7,8 +7,8 @@ patterned source.
 In this example, we use 3 patterns and the data is stored in the multipattern_pattern.bin 
 binary file stored as a 3x6x11 3D float (single-precision) array, where 3 is the pattern 
 count, 6x11 is the dimension for each 2D pattern. To use this feature in the command line,
-you must use a .json input file, like the one in this example, and set "SrcNum"  to an integer
-greater than 1, and the "SrcType" to "pattern" or "pattern3d";
+you must use a .json input file, like the one in this example, and set "SrcNum" in
+Optode.Source to an integer greater than 1, and its "Type" to "pattern" or "pattern3d";
 
 The output of the data in the .jnii file is stored in a 5-D array: 3x60x60x60x1, where
 3 is the pattern count, 60x60x60 is the 3D domain size, and 1 is the time-gate.

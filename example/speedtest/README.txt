@@ -1,8 +1,13 @@
 = README for the speed benchmark example =
 
-In this example, we benchmark the speed of MCX code 
-with different combinations of compilation options, 
-number of photons atomic/non-atomic memory access.
+In this example, we benchmark the speed of MCX with
+different numbers of threads and photons, for the mcx
+binaries built by the make targets given to the script
+(default: "all"). It reproduces
+the speed test of the original MCX paper; MCX now chooses
+the thread and block sizes itself (-A, the default) and
+always uses atomic operations, and "mcx --bench" lists
+the built-in benchmarks for a quick speed comparison.
 
 The detailed report can be found in the paper Fang2009 
 Section 3.4 and Fig. 7.
@@ -28,7 +33,7 @@ For some simulations with more threads, you may
 experience the "kernel launch timed-out" error.
 Please read the doc/FAQ.txt to find out why.
 If you have configured a dedicated GPU, you can
-edit the runspeedbench.sh script and uncommend
+edit the runspeedbench.sh script and uncomment
 the test settings for the dedicated cases.
 
 [Fang2009]   Qianqian Fang and David A. Boas, "Monte Carlo 
