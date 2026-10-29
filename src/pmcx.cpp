@@ -929,7 +929,7 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
 
     if (user_cfg.contains("debuglevel")) {
         std::string debug_level = py::str(user_cfg["debuglevel"]);
-        const char debugflag[] = {'R', 'M', 'P', '\0'};
+        const char debugflag[] = {'R', 'M', 'P', 'T', '\0'};  /* as the command line and mcxlab */
         char debuglevel[MAX_SESSION_LENGTH] = {'\0'};
 
         if (debug_level.empty()) {
@@ -1807,6 +1807,8 @@ static const char* pmcx_run_doc_lines[] = {
     "        Width of each time gate (s) [tend - tstart, one gate].\n",
     "    maxgate : int\n",
     "        The number of time gates simulated per run [0: all that fit in GPU memory].\n",
+    "        When fewer than the gates, the photons are rerun for each group of gates,\n",
+    "        and pmcx returns the raw output (isnormalized is turned off, with a warning).\n",
     "\n",
     "    Source\n",
     "\n",
@@ -1815,8 +1817,8 @@ static const char* pmcx_run_doc_lines[] = {
     "        photon weight [1]. Several sources: one row per source.\n",
     "    * srcdir : array_like\n",
     "        [vx, vy, vz] unit launch direction; an optional 4th value is the focal\n",
-    "        length of the area sources: 0 collimated, >0 converging, <0 diverging, nan\n",
-    "        isotropic, -inf Lambertian.\n",
+    "        length of the area sources: 0 collimated, >0 converging, <0 diverging; or,\n",
+    "        for every source type, nan for an isotropic or -inf for a Lambertian launch.\n",
     "    srctype : str\n",
     "        ['pencil'], 'isotropic', 'arcsine', 'cone', 'zgaussian', 'gaussian',\n",
     "        'hyperboloid', 'disk', 'ring', 'planar', 'pattern', 'pattern3d', 'fourier',\n",
@@ -1952,7 +1954,7 @@ static const char* pmcx_run_doc_lines[] = {
     "\n",
     "    debuglevel : str\n",
     "        Debug flags: 'P' progress bar, 'M' record photon trajectories, 'T'\n",
-    "        trajectories only, 'R' test the RNG.\n",
+    "        trajectories only (no flux, detp or seeds), 'R' test the RNG.\n",
     "    maxjumpdebug : int\n",
     "        The most trajectory positions recorded [10000000].\n",
     "    istrajstokes : int\n",

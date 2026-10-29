@@ -105,6 +105,7 @@ function varargout = mcxlab(varargin)
 %                        0 [default]: collimated
 %                        >0: converging to a focus at that distance along srcdir
 %                        <0: diverging from a virtual point behind the source
+%                      or, for every source type:
 %                        nan: isotropic launch, regardless of srcdir
 %                        -inf: Lambertian (cosine) launch around srcdir, over a
 %                              hemisphere in 3D, or a semicircle within the plane
@@ -431,6 +432,10 @@ if (nargin == 2 && ischar(varargin{2}))
     end
 end
 
+if (ischar(varargin{1}) && ~any(strcmp(varargin{1}, {'gpuinfo', 'version'})))
+    error('unsupported command ''%s'': cfg must be a struct, ''gpuinfo'' or ''version''', varargin{1});
+end
+
 if (isstruct(varargin{1}))
     for i = 1:length(varargin{1})
         if (ischar(useopencl) || useopencl > 1)
@@ -438,16 +443,30 @@ if (isstruct(varargin{1}))
         elseif (useopencl < 0)
             varargin{1}(i).gpuid = -useopencl;
         end
-        castlist = {'srcpattern', 'srcpos', 'detpos', 'prop', 'workload', 'srcdir', 'srciquv', 'isnormalized', ...
-                    'isreflect', 'nphoton', 'nblocksize', 'nthread', 'tstart', 'tend', 'maxdetphoton', 'maxgate', ...
-                    'respin', 'isref3', 'isrefint', 'isgpuinfo', 'issrcfrom0', 'autopilot', 'minenergy', 'unitinmm', ...
-                    'voidtime', 'issavedet', 'issaveseed', 'issaveref', 'issaveexit', 'ismomentum', 'isspecular', ...
-                    'replaydet', 'maxvoidstep', 'maxjumpdebug', 'gscatter', 'srcnum', 'srcid', 'omega', 'issave2pt', ...
-                    'lambda', 'steps', 'crop0', 'crop1', 'istrajstokes', 'detdir', 'sdmap'};
-        for j = 1:length(castlist)
-            if (isfield(varargin{1}(i), castlist{j}))
-                varargin{1}(i).(castlist{j}) = double(varargin{1}(i).(castlist{j}));
+        % the mex reads the numeric fields as double arrays: convert any other numeric or
+        % logical class (int32(1), true, single ...) and MATLAB string scalars here; vol keeps
+        % its class, which selects the media format, a logical vol becomes uint8 labels, seed
+        % keeps uint8 (replay) and detphotons is converted to single below
+        fields = fieldnames(varargin{1}(i));
+        for j = 1:length(fields)
+            val = varargin{1}(i).(fields{j});
+            if (isa(val, 'string'))
+                val = char(val);
+            elseif (strcmp(fields{j}, 'vol'))
+                if (islogical(val))
+                    val = uint8(val);
+                end
+            elseif (strcmp(fields{j}, 'seed'))
+                if (~isa(val, 'uint8'))
+                    val = double(val);
+                end
+            elseif (~strcmp(fields{j}, 'detphotons') && (isnumeric(val) || islogical(val)) && ~isa(val, 'double'))
+                val = double(val);
             end
+            if (any(strcmp(fields{j}, {'srcpos', 'srcdir'})) && size(val, 2) == 1 && any(numel(val) == [3 4]))
+                val = val(:)';  % a column vector is one source
+            end
+            varargin{1}(i).(fields{j}) = val;
         end
         if (~isfield(varargin{1}(i), 'tstart'))
             varargin{1}(i).tstart = 0;
@@ -478,6 +497,9 @@ if (isstruct(varargin{1}))
                 varargin{1}(i).savedetflag = 'dspmxvw';
                 varargin{1}(i).savedetflag(detfields == 0) = [];
             end
+        end
+        if (isfield(varargin{1}(i), 'detphotons') && isnumeric(varargin{1}(i).detphotons))
+            varargin{1}(i).detphotons = single(varargin{1}(i).detphotons);  % the mex copies it as single
         end
     end
 end
