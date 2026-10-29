@@ -287,8 +287,10 @@ function varargout = mcxlab(varargin)
 %                      recorded in the background voxels next to the domain, so
 %                      pad cfg.vol with a layer of 0s where it is wanted
 %      cfg.session:    a name for the output files, used when mcxlab returns nothing
-%      cfg.flog:       where the log goes [2]: 2 stderr, 1 stdout, 0 stdout without
-%                      the banner, or a file name (appended)
+%      cfg.flog:       where the log goes [2]: 2 the MATLAB/Octave console (in Python,
+%                      sys.stdout), 1 the stdout of the process (the terminal MATLAB/Octave
+%                      was started from), 0 the same without the banner, or a file name
+%                      (appended); '/dev/null' (Linux/macOS) or 'NUL' (Windows) silences it
 %      cfg.lang:       language of the log: zh_CN, zh_TW, ja_JP, fr_CA, es_MX, de_DE,
 %                      ko_KR, hi_IN or pt_BR
 %

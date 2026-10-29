@@ -444,8 +444,8 @@ the verbose command line options in MCX.
        cfg.flog: [2]  log printing control; if set to a string, it defines a file path
                       at which location the log will be printed in append mode; on Linux and Mac OS,
                       one can use special paths such as /dev/null; if set to an integer,
-                      2 (default): stderr
-                      1: stdout
+                      2 (default): the MATLAB/Octave console (stderr; in Python, sys.stdout)
+                      1: stdout of the process (the terminal MATLAB/Octave was started from)
                       0: stdout but suppress printing MCX banner
        cfg.istrajstokes [0]: if set to 1, traj.iquv output contains the Stokes IQUV vector along trajectories
        cfg.maxjumpdebug: [10000000|int] when trajectory is requested in the output,
