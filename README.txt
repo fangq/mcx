@@ -235,6 +235,7 @@ lists all of them, with their commit hashes.
 * [6b1dbb7] `cfg.flog` also controls the echo of the cfg fields: 'none' silences everything
 * [b521bfe] `cfg.flog='none'` and `-l none` silence the log on every OS ('NUL' and '/dev/null' are accepted too; 'NUL' wrote a file on Linux, #280)
 * [950afef] the mex files are no longer UPX-packed: a packed mex aborted MATLAB/Octave whenever it raised an error
+* [43404f6] the device can be picked by name: `-G 4070` or `cfg.gpuid='4070'` uses the first device whose name contains 4070 (ignoring case), `-G titan:2` the 2nd one
 * [3d52135, ae2dfcf] pmcx: `loadmc2` reads x fastest, `meanscat` per medium, `mcxlab(cfg,'cuda')`, and
   the outputs of several patterns are split by pattern
 * [1a2af0d] pmcx: NumPy-style docstrings; `help(pmcx.run)` lists every cfg key and output

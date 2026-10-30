@@ -3,6 +3,7 @@
 Major updates are marked with a "*"
 
 == MCX v2026 (Lucky Lux - 3.0), FangQ <q.fang (a) neu.edu> ==
+ 2026-10-29 [43404f6]*[feat] -G/cfg.gpuid picks a device by name: "4070" the first device whose name contains it, "titan:2" the 2nd
  2026-10-29 [950afef]*[bug] package the mex files without upx: a packed mex aborted MATLAB/Octave on any error it raised
  2026-10-29 [7a672ee] [feat] -l none prints nothing, not even the progress bar, as cfg.flog='none'
  2026-10-29 [2cb88a1] [feat] cfg.flog='none' silences the log; 'NUL' and '/dev/null' stay accepted on every OS, refs fangq/mcx#280
