@@ -3121,7 +3121,8 @@ int mcx_list_gpu(Config* cfg, GPUInfo** info) {
     return 1;
 #else
     int dev;
-    int deviceCount, activedev = 0;
+    int deviceCount, activedev = 0, nmatched = 0;
+    char devpattern[MAX_DEVICE] = {'\0'};
 
     cudaError_t cuerr = cudaGetDeviceCount(&deviceCount);
 
@@ -3151,10 +3152,20 @@ int mcx_list_gpu(Config* cfg, GPUInfo** info) {
         return 0;
     }
 
+    /* a device name pattern (-G 4070, cfg.gpuid='titan:2') selects the device by its name below */
+    if (cfg->isgpuinfo != 3 && mcx_isdevicename(cfg->deviceid)) {
+        memcpy(devpattern, cfg->deviceid, MAX_DEVICE - 1);  /* devpattern ends with a 0, a full deviceid may not */
+        memset(cfg->deviceid, '0', MAX_DEVICE);
+    }
+
     // scan from the first device
     for (dev = 0; dev < deviceCount; dev++) {
         cudaDeviceProp dp;
         CUDA_ASSERT(cudaGetDeviceProperties(&dp, dev));
+
+        if (devpattern[0] && mcx_devicenamematch(devpattern, dp.name, &nmatched)) {
+            cfg->deviceid[dev] = '1';
+        }
 
         if (cfg->isgpuinfo == 3) {
             activedev++;
@@ -3212,6 +3223,10 @@ int mcx_list_gpu(Config* cfg, GPUInfo** info) {
 
     if (cfg->isgpuinfo == 2 && cfg->parentid == mpStandalone) { //list GPU info only
         exit(0);
+    }
+
+    if (devpattern[0]) {
+        mcx_devicenamecheck(devpattern, nmatched);
     }
 
     if (activedev < MAX_DEVICE) {

@@ -330,6 +330,10 @@ void mcx_savedetphoton(float* ppath, void* seeds, int count, int seedbyte, Confi
 void mcx_loadseedfile(Config* cfg);
 void mcx_cleargpuinfo(GPUInfo** gpuinfo);
 int  mcx_isbinstr(const char* str);
+int  mcx_isdevicename(const char* str);
+int  mcx_isdeviceindex(const char* str);
+int  mcx_devicenamematch(const char* pattern, const char* devname, int* nmatched);
+void mcx_devicenamecheck(const char* pattern, int nmatched);
 void mcx_progressbar(float percent, Config* cfg);
 void mcx_flush(Config* cfg);
 int  mcx_run_from_json(char* jsonstr);

@@ -40,7 +40,7 @@ void mcx_loadseedjdat(char* filename, Config* cfg);
 int mcx_readarg(int argc, char* argv[], int id, void* output, const char* type);
 void mcx_loadbenchmark(char* key, Config* cfg);
 #ifdef MCX_OPENCL
-void mcx_run_simulation(Config* cfg, float* fluence, float* totalenergy);
+    void mcx_run_simulation(Config* cfg, float* fluence, float* totalenergy);
 #endif
 
 #ifndef MAX_PROP_AND_DETECTORS
@@ -48,9 +48,9 @@ void mcx_run_simulation(Config* cfg, float* fluence, float* totalenergy);
 #endif
 
 #ifdef MCX_OPENCL
-typedef uint4 GridDim;  /* mcx-cl stores the domain size and shape grid dimensions as uint4 */
+    typedef uint4 GridDim;  /* mcx-cl stores the domain size and shape grid dimensions as uint4 */
 #else
-typedef uint3 GridDim;
+    typedef uint3 GridDim;
 #endif
 
 extern const char* srctypeid[];
@@ -1005,6 +1005,56 @@ static void test_parsecmd(void) {
 }
 
 /*-----------------------------------------------------------------------------
+ *  -G/cfg.gpuid device name patterns "name" and "name:N"
+ *-----------------------------------------------------------------------------*/
+
+static void test_devicename(void) {
+    const char* names[] = {"NVIDIA TITAN V", "NVIDIA GeForce RTX 4070", "NVIDIA TITAN V"};
+    const char* pattern[] = {"titan", "titan:2", "4070", "TiTaN v:2", ":3", "nvidia:2"};
+    const int expect[] = {0, 2, 1, 2, 2, 1};  /* the device each pattern selects */
+    char mask[MAX_DEVICE], selected[3] = {1, 2, 0};
+    int i, j, n = 0;
+
+    EXPECT_TRUE(mcx_isdevicename("4070") && mcx_isdevicename("titan:2"), "a string with characters other than 0/1 is a device name");
+    EXPECT_TRUE(!mcx_isdevicename("0110") && !mcx_isdevicename(""), "a 0/1 mask or an empty string is not a device name");
+    memset(mask, '0', MAX_DEVICE);  /* a full mask has no terminating 0 */
+    mask[1] = '1';
+    EXPECT_TRUE(!mcx_isdevicename(mask), "an unterminated 0/1 mask is not a device name");
+    EXPECT_TRUE(!mcx_isdevicename(selected), "the numbers of the selected devices are not a device name");
+    EXPECT_TRUE(mcx_isdeviceindex("2") && mcx_isdeviceindex("-1") && mcx_isdeviceindex("256"), "-G 2, -G -1 and -G 256 are device numbers");
+    EXPECT_TRUE(!mcx_isdeviceindex("4070") && !mcx_isdeviceindex("titan"), "-G 4070 and -G titan are device names");
+
+    for (i = 0; i < 6; i++) {
+        int nmatched = 0, chosen = -1;
+
+        for (j = 0; j < 3; j++)
+            if (mcx_devicenamematch(pattern[i], names[j], &nmatched)) {
+                chosen = (chosen < 0) ? j : 99;
+            }
+
+        EXPECT_EQ(chosen, expect[i], pattern[i]);
+    }
+
+    EXPECT_EXIT_OK(mcx_devicenamecheck("titan:2", 2), "titan:2 with two matching devices");
+    EXPECT_EXIT(mcx_devicenamecheck("titan:3", 2), "titan:3 with two matching devices is an error");
+    EXPECT_EXIT(mcx_devicenamecheck("4070", 0), "a name that matches no device is an error");
+    EXPECT_EXIT(mcx_devicenamematch("titan:", names[0], &n), "a ':' without a number is an error");
+    EXPECT_EXIT(mcx_devicenamematch("titan:0", names[0], &n), "N after ':' must be positive");
+
+    Config cfg;
+
+    parse_opts(&cfg, "-G 4070");
+    EXPECT_TRUE(strcmp(cfg.deviceid, "4070") == 0, "-G 4070 is a device name");
+    parse_opts(&cfg, "-G titan:2");
+    EXPECT_TRUE(strcmp(cfg.deviceid, "titan:2") == 0, "-G titan:2 is a device name");
+    parse_opts(&cfg, "-G 2");
+    EXPECT_TRUE(cfg.deviceid[0] != '1' && cfg.deviceid[1] == '1', "-G 2 is a device number");
+    parse_opts(&cfg, "-G 300");
+    EXPECT_TRUE(strcmp(cfg.deviceid, "300") == 0, "-G 300, beyond 256, is a device name");
+    clear_cfg(&cfg);
+}
+
+/*-----------------------------------------------------------------------------
  *  mcx_validatecfg and mcx_replayinit, the setup path of mcxlab and pmcx
  *---------------------------------------------------------------------------*/
 
@@ -1477,7 +1527,6 @@ static void test_cmd_errors(void) {
     EXPECT_EXIT(parse_raw("--nosuchoption 1"), "an unknown long option");
     EXPECT_EXIT(parse_raw("-% 1"), "an unknown short option");
     EXPECT_EXIT(parse_raw("-f a.json -i"), "-i together with -f");
-    EXPECT_EXIT(parse_raw("--bench cube60 -G 300"), "a GPU ID beyond 256");
     EXPECT_EXIT(parse_raw("--bench cube60 -P"), "-P without shapes");
     EXPECT_EXIT(parse_raw("--bench cube60 --json"), "--json without a fragment");
     EXPECT_EXIT(parse_raw("--bench cube60 -O z"), "an unknown -O type");
@@ -1557,13 +1606,21 @@ static void test_io_errors(void) {
     EXPECT_EXIT({Config c; init_cfg(&c); strcpy(c.seedfile, "noseed.mch"); c.medianum = 2; mcx_loadseedfile(&c);}, "an .mch file without seeds");
     EXPECT_EXIT({Config c; init_cfg(&c); strcpy(c.seedfile, "media.mch"); c.medianum = 5; mcx_loadseedfile(&c);}, "an .mch file with other media");
     EXPECT_EXIT({Config c; init_cfg(&c); strcpy(c.seedfile, "media.mch"); c.medianum = 2; mcx_loadseedfile(&c);}, "an .mch file without photon data");
+
     if (system("cp ut.mch ut_nopp.mch") != 0) {
         printf("warning: can not copy ut.mch\n");
     }
 
     EXPECT_EXIT({Config c; init_cfg(&c); strcpy(c.seedfile, "ut_nopp.mch"); c.medianum = 3; c.outputtype = otJacobian; c.detnum = 2;
-                 FILE* fp = fopen("ut_nopp.mch", "r+b"); History h; if (fp && fread(&h, sizeof(h), 1, fp) == 1) {h.savedetflag = 0; rewind(fp); fwrite(&h, sizeof(h), 1, fp);} if (fp) {fclose(fp);}
-                 mcx_loadseedfile(&c);}, "replay from an .mch file without partial paths");
+    FILE* fp = fopen("ut_nopp.mch", "r+b"); History h; if (fp && fread(&h, sizeof(h), 1, fp) == 1) {
+    h.savedetflag = 0;
+    rewind(fp);
+        fwrite(&h, sizeof(h), 1, fp);
+    }
+    if (fp) {
+    fclose(fp);
+    }
+    mcx_loadseedfile(&c);}, "replay from an .mch file without partial paths");
     EXPECT_EXIT({Config c; init_cfg(&c); mcx_loadseedjdat((char*)"nosuch.jdt", &c);}, "a missing .jdt file");
     write_file("nodet.jdt", "{\"MCXData\":{}}", 14);
     EXPECT_EXIT({Config c; init_cfg(&c); mcx_loadseedjdat((char*)"nodet.jdt", &c);}, "a .jdt file without photon data");
@@ -1864,7 +1921,7 @@ static void test_more_paths(void) {
     "'Pattern':{'Nx':2,'Ny':2,'Data':[1,0.5,0.5,1]}},'Detector':[{'Pos':[2,3,0],'R':1}]}}"
 
 #ifdef MCX_OPENCL
-char* print_cl_errstring(int err);  /* cl_int is a 32-bit int */
+    char* print_cl_errstring(int err);  /* cl_int is a 32-bit int */
 #endif
 
 /** the OpenCL error strings of mcx-cl */
@@ -2517,6 +2574,7 @@ static void test_net_and_branches(void) {
                       "'_ArrayZipData_':'eJxjZIAAVkYIDQAATwAI'}," JBASE_OPTODE "}", "an svmc label beyond the media");
 
 #ifndef MCX_OPENCL
+
     /* the library entry point that runs a JSON input on the GPU; skipped on a
        machine with no NVIDIA or AMD (ROCm) GPU device, as the CI runners are */
     if (access("/dev/nvidia0", F_OK) == 0 || access("/dev/kfd", F_OK) == 0) {
@@ -2600,6 +2658,7 @@ void run_utils_tests(void) {
     test_loadjson();
     test_srcslots();
     test_parsecmd();
+    test_devicename();
     test_validatecfg();
     test_maskdet();
     test_savejdata();

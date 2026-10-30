@@ -2199,10 +2199,13 @@ void mcx_preprocess(Config* cfg) {
         mcx_maskdet(cfg);
     }
 
-    for (int i = 0; i < MAX_DEVICE; i++)
-        if (cfg->deviceid[i] == '0') {
-            cfg->deviceid[i] = '\0';
-        }
+    /* a 0/1 mask: '\0' marks the unused devices; a device name pattern ("4070") stays as is */
+    if (!mcx_isdevicename(cfg->deviceid)) {
+        for (int i = 0; i < MAX_DEVICE; i++)
+            if (cfg->deviceid[i] == '0') {
+                cfg->deviceid[i] = '\0';
+            }
+    }
 
     if ((cfg->mediabyte == MEDIA_AS_F2H || cfg->mediabyte == MEDIA_MUA_FLOAT || cfg->mediabyte == MEDIA_AS_HALF) && cfg->medianum < 2) {
         MCX_ERROR(-4, "the 'prop' field must contain at least 2 rows for the requested media format");
@@ -6300,7 +6303,9 @@ void mcx_parsecmd(int argc, char* argv[], Config* cfg) {
                     break;
 
                 case 'G':
-                    if (mcx_isbinstr(argv[i + 1])) {
+
+                    /* a 0/1 mask or a device name pattern ("4070", "titan:2"), else a device number */
+                    if (i + 1 < argc && (mcx_isbinstr(argv[i + 1]) || !mcx_isdeviceindex(argv[i + 1]))) {
                         i = mcx_readstrarg(argc, argv, i, cfg->deviceid, sizeof(cfg->deviceid));
                         break;
                     } else {
@@ -6875,6 +6880,127 @@ int mcx_isbinstr(const char* str) {
 }
 
 /**
+ * @brief Test if a -G/cfg.gpuid string selects a device by its name
+ *
+ * Besides a device number and a string of 0s and 1s (a mask of the devices to
+ * use), -G/cfg.gpuid accepts a device name pattern "name" or "name:N": the
+ * first, or the N-th (1-based), device whose name contains "name", ignoring
+ * case, in the order -L lists them, e.g. "4070", "titan:2" or "radeon"
+ *
+ * @param[in] str: the string to be tested, such as cfg->deviceid
+ * @return 1 if the string is a device name pattern, 0 if it is a 0/1 mask or empty
+ */
+
+int mcx_isdevicename(const char* str) {
+    int i;
+
+    /* a mask is not always terminated within MAX_DEVICE, and once the devices are
+       selected, cfg->deviceid holds their 1-based numbers, which are not printable */
+    for (i = 0; i < MAX_DEVICE && str[i]; i++)
+        if (str[i] != '0' && str[i] != '1' && isprint((unsigned char)str[i])) {
+            return 1;
+        }
+
+    return 0;
+}
+
+/**
+ * @brief Test if a -G command line value is a device number
+ *
+ * An integer from -MAX_DEVICE to MAX_DEVICE is a device number (-1: the CPU,
+ * where supported); a larger one, such as 4070, is a device name pattern
+ *
+ * @param[in] str: the -G value
+ */
+
+int mcx_isdeviceindex(const char* str) {
+    char* end = NULL;
+    long id;
+
+    if (str == NULL || str[0] == '\0') {
+        return 1;  /* let the number parser report the missing value */
+    }
+
+    id = strtol(str, &end, 10);
+    return (*end == '\0' && id >= -MAX_DEVICE && id <= MAX_DEVICE);
+}
+
+/**
+ * @brief Read the device name and the match number N of a device name pattern
+ *
+ * @param[in] pattern: the device name pattern "name" or "name:N"
+ * @param[out] namelen: the length of the name, the text before the last ':'
+ * @return N, or 1 if the pattern has no ':N'
+ */
+
+static int mcx_devicenamenth(const char* pattern, size_t* namelen) {
+    const char* colon = strrchr(pattern, ':');
+    char* end = NULL;
+    long nth;
+
+    *namelen = strlen(pattern);
+
+    if (colon == NULL) {
+        return 1;
+    }
+
+    nth = strtol(colon + 1, &end, 10);
+
+    if (colon[1] == '\0' || *end != '\0' || nth < 1 || nth > MAX_DEVICE) {
+        MCX_ERROR(-2, "a device name pattern 'name:N' (-G/gpuid) needs a positive number N after ':'");
+    }
+
+    *namelen = colon - pattern;
+    return (int)nth;
+}
+
+/**
+ * @brief Test if a device is the one a device name pattern selects
+ *
+ * Called for each device, in the order -L lists them
+ *
+ * @param[in] pattern: the device name pattern "name" or "name:N" (see mcx_isdevicename)
+ * @param[in] devname: the name of the device
+ * @param[in,out] nmatched: how many devices matched the name so far; 0 before the first device
+ * @return 1 if this is the device to use, 0 otherwise
+ */
+
+int mcx_devicenamematch(const char* pattern, const char* devname, int* nmatched) {
+    size_t len, i, j;
+    int nth = mcx_devicenamenth(pattern, &len), found = (len == 0);
+
+    for (i = 0; !found && devname[i]; i++) {
+        for (j = 0; j < len && devname[i + j] && tolower((unsigned char)devname[i + j]) == tolower((unsigned char)pattern[j]); j++);
+
+        found = (j == len);
+    }
+
+    return (found && ++(*nmatched) == nth);
+}
+
+/**
+ * @brief Report an error if a device name pattern selected no device
+ *
+ * @param[in] pattern: the device name pattern "name" or "name:N"
+ * @param[in] nmatched: how many devices matched the name, counted by mcx_devicenamematch
+ */
+
+void mcx_devicenamecheck(const char* pattern, int nmatched) {
+    size_t len;
+    char msg[MAX_DEVICE + 128];
+
+    if (nmatched < mcx_devicenamenth(pattern, &len)) {
+        if (nmatched == 0) {
+            snprintf(msg, sizeof(msg), "no device has '%.*s' in its name (-G/gpuid '%s'); -L lists the devices", (int)len, pattern, pattern);
+        } else {
+            snprintf(msg, sizeof(msg), "only %d device(s) have '%.*s' in their names, too few for -G/gpuid '%s'; -L lists the devices", nmatched, (int)len, pattern, pattern);
+        }
+
+        MCX_ERROR(-2, msg);
+    }
+}
+
+/**
  * @brief Convert a float to an IEEE 754 half-precision number
  *
  * The mantissa is truncated to 10 bits; values below 2^-14 become denormals,
@@ -7147,6 +7273,10 @@ where possible parameters include (the first value in [*|*] is the default)\n\
  -G [0|int]    (--gpu)         specify which GPU to use, list GPU by -L; 0 auto\n\
       or\n\
  -G '1101'     (--gpu)         using multiple devices (1 enable, 0 disable)\n\
+      or\n\
+ -G 'name:N'   (--gpu)         the N-th device (':N' omitted: the first) whose\n\
+                               name contains 'name', ignoring case, e.g.\n\
+                               -G 4070, -G titan:2; -L lists the device names\n\
  -W '50,30,20' (--workload)    workload for active devices; normalized by sum\n\
  -I            (--printgpu)    print GPU information and run program\n\
  --atomic [1|0]                deprecated and ignored; atomic accumulation is\n\

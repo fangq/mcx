@@ -24,7 +24,7 @@ tests = {@test_info, @test_errors, @test_outputs, @test_detected_photons, ...
          @test_no_fluence, @test_struct_array, @test_patterns, @test_rf, ...
          @test_replay, @test_energy_output, @test_flog_silent, ...
          @test_end_to_end, @test_pervoxel_unitinmm, @test_input_types, ...
-         @test_launch_angles, @test_polarized};
+         @test_launch_angles, @test_polarized, @test_gpuname};
 failed = {};
 for i = 1:numel(tests)
     name = func2str(tests{i});
@@ -266,3 +266,18 @@ for i = 1:3
     flux = runsim(cfg);
     assert(isequal(size(flux.prop), [4 2]) && all(isfinite(flux.data(:))), 'polarized output');
 end
+
+function test_gpuname(extra)
+% a gpuid string with characters other than 0 and 1 picks a device by its name,
+% ignoring case: 'name' is the first device whose name contains it, 'name:N' the N-th
+info = runsim('gpuinfo');
+gpu = 1;
+if (isfield(extra, 'gpuid') && isnumeric(extra.gpuid))
+    gpu = extra.gpuid;
+end
+name = strtok(info(gpu).name, ':');  % AMD's OpenCL device names, such as gfx1030:xnack-, have a ':'
+nth = sum(~cellfun(@isempty, strfind(lower({info(1:gpu).name}), lower(name))));
+flux = runsim(mkcfg(extra, 'gpuid', sprintf('%s:%d', upper(name), nth)));
+assert(absorbed(flux) > 0, 'gpuid=''NAME:N'' runs on the named device');
+assert_error(@() runsim(mkcfg(extra, 'gpuid', 'no such device')), 'a gpuid name that matches no device');
+assert_error(@() runsim(mkcfg(extra, 'gpuid', [name ':'])), 'a gpuid name with '':'' but no number');

@@ -706,8 +706,10 @@ Options taking a value accept it after a space; long options are written as
 <pre>
 `-L`, `--listgpu`
     Meaning: list the GPUs and exit
-`-G n` or `-G '1101'`, `--gpu`
-    Meaning: use GPU n (from 1), or several GPUs given as a 0/1 mask
+`-G n`, `-G '1101'` or `-G 'name:N'`, `--gpu`
+    Meaning: use GPU n (from 1), or several GPUs given as a 0/1 mask,
+        or by name: `-G 'name:N'` is the N-th device whose name contains `name` (ignoring
+        case), `-G name` the first, e.g. `-G 4070`, `-G titan:2`
 `-W '50,30,20'`, `--workload`
     Meaning: relative share of photons for each selected GPU
 `-A 1/0`, `--autopilot`

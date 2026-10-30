@@ -310,7 +310,10 @@ function varargout = mcxlab(varargin)
 % == GPU ==
 %      cfg.gpuid:      which GPU to use, from 1 ('mcx -L' or mcxlab('gpuinfo')
 %                      lists them) [1]; a string of 0s and 1s selects several,
-%                      e.g. '1101' uses the 1st, 2nd and 4th GPUs.
+%                      e.g. '1101' uses the 1st, 2nd and 4th GPUs; any other
+%                      string picks a GPU by its name: 'name:N' is the N-th GPU
+%                      whose name contains 'name', ignoring case, and 'name' the
+%                      first, e.g. '4070' or 'titan:2'
 %                      Example: <mcx_gpu_benchmarks.m>
 %      cfg.workload:   the relative share of photons for each selected GPU, e.g.
 %                      [50 20 30]

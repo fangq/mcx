@@ -1168,10 +1168,13 @@ void parse_config(const py::dict& user_cfg, Config& mcx_config) {
             strncpy(mcx_config.deviceid, gpu_id_string_value.c_str(), MAX_DEVICE);
         }
 
-        for (int i = 0; i < MAX_DEVICE; i++)
-            if (mcx_config.deviceid[i] == '0') {
-                mcx_config.deviceid[i] = '\0';
-            }
+        /* a 0/1 mask: '\0' marks the unused devices; a device name pattern ("4070") stays as is */
+        if (!mcx_isdevicename(mcx_config.deviceid)) {
+            for (int i = 0; i < MAX_DEVICE; i++)
+                if (mcx_config.deviceid[i] == '0') {
+                    mcx_config.deviceid[i] = '\0';
+                }
+        }
     }
 
     if (user_cfg.contains("workload")) {
@@ -1981,7 +1984,9 @@ static const char* pmcx_run_doc_lines[] = {
     "\n",
     "    gpuid : int or str\n",
     "        The GPU to use, from 1 [1]; a string of 0s and 1s selects several, e.g.\n",
-    "        '1101'. pmcx.gpuinfo() lists them.\n",
+    "        '1101'; any other string picks a GPU by its name: 'name:N' is the N-th\n",
+    "        GPU whose name contains 'name', ignoring case, and 'name' the first, e.g.\n",
+    "        '4070' or 'titan:2'. pmcx.gpuinfo() lists them.\n",
     "    workload : array_like\n",
     "        The relative share of photons for each selected GPU.\n",
     "    autopilot : int\n",
