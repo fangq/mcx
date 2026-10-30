@@ -1188,9 +1188,12 @@ __device__ inline int launchnewphoton(MCXpos* p, MCXdir* v, Stokes* s, MCXtime* 
     }
 
     /**
-     * First, let's terminate the current photon and perform detection calculations
+     * First, let's terminate the current photon and perform detection calculations;
+     * a thread starts with a NaN weight (no photon yet), which is skipped here by its
+     * bits rather than by a comparison: under clang's -ffast-math (the HIP build) a
+     * comparison is assumed never to see a NaN and is folded to true
      */
-    if (fabsf(p->w) >= 0.f) {
+    if ((__float_as_uint(p->w) & 0x7fffffffu) <= 0x7f800000u) {
         ppath[gcfg->partialdata] += p->w; //< sum all the remaining energy
 
         if (gcfg->debuglevel & (MCX_DEBUG_MOVE | MCX_DEBUG_MOVE_ONLY)) {

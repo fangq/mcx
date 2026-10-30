@@ -49,8 +49,10 @@ if(USE_HIP)
     # -munsafe-fp-atomics lets clang emit the native global_atomic_add_f32 on
     # CDNA/RDNA instead of a compare-and-swap retry loop; the fluence grid is
     # accumulated with float atomicAdd, so this is the dominant performance flag.
-    # -ffast-math is the HIP counterpart of the CUDA build's -use_fast_math.
-    set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} -DUSE_HIP -DSAVE_DETECTORS -munsafe-fp-atomics -ffast-math")
+    # -ffast-math is the HIP counterpart of the CUDA build's -use_fast_math, less
+    # its -ffinite-math-only: nvcc's flag keeps NaN/Inf semantics, and the kernel
+    # relies on them (a NaN weight marks a thread that has no photon yet).
+    set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} -DUSE_HIP -DSAVE_DETECTORS -munsafe-fp-atomics -ffast-math -fno-finite-math-only")
 
     # Add USE_HIP define to C and C++ files as well (for header guards)
     add_compile_definitions(USE_HIP)
