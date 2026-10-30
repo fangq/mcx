@@ -287,6 +287,16 @@ begin
   Ok(not McxProgressOf('nothing here', P), 'text with no percentage is not progress');
   Ok(not McxProgressOf('] %', P), 'a bracket and a bare percent is not progress');
   Ok(not McxProgressOf('62%', P), 'a percentage with no bracket is not progress');
+
+  { vkmmc's batch lines }
+  Ok(McxBatchProgressOf('  batch 2: 305843 photons (830131/1000000)', P) and (P = 83),
+     'a vkmmc batch line reads done over total');
+  Ok(McxBatchProgressOf('  batch 3: 169869 photons (1000000/1000000)', P) and (P = 100),
+     'the last vkmmc batch reads 100');
+  Ok(not McxBatchProgressOf('Grid: 61x61x61 x 1 gates (1.0000 mm)', P),
+     'a line that is not a batch is not progress');
+  Ok(not McxBatchProgressOf('  batch 1: photons (12/0)', P),
+     'a batch with no total is not progress');
 end;
 
 { Replays a captured run at several read sizes and checks the percentages
@@ -439,10 +449,45 @@ begin
     Ok(Pos('-t 65536', Cmd) > 0, 'the thread count is passed');
     Ok(Pos('-T 64', Cmd) > 0, 'the block size is passed');
     Ok(Pos('-G 11', Cmd) > 0, 'the device mask is passed');
+
+    { vkmmc picks its own device and threads, and knows none of mcx's flags
+      for them. }
+    R.SetStr('@run.backend', 'vkmmc');
+    R.SetStr('@run.workload', '50,50');
+    Cmd := McxCommandLine('/opt/vkmmc/bin/vkmmc', '/tmp/box.json', D, R);
+    Ok((Pos('-f box.json', Cmd) > 0) and (Pos('-s box', Cmd) > 0),
+       'vkmmc is given the input and the session');
+    Ok((Pos('-G', Cmd) = 0) and (Pos('-W', Cmd) = 0) and (Pos('-A 0', Cmd) = 0) and
+       (Pos('-t ', Cmd) = 0) and (Pos('-T ', Cmd) = 0),
+       'vkmmc is given no device, workload or thread flags');
   finally
     R.Free;
     D.Free;
   end;
+end;
+
+{ Which program the three choices run. }
+procedure TestPlan;
+var
+  P: TMcxPlan;
+begin
+  WriteLn('solver plan');
+  P := McxPlanFor('amd', 'voxel', 'diffusive');
+  Ok((P.Backend = mbMCXCL) and not P.Svmc, 'an AMD card on a voxel grid runs MCX-CL');
+  P := McxPlanFor('amd', 'voxel', 'lowscatter');
+  Ok((P.Backend = mbMCXCL) and P.Svmc, 'and a low-scattering grid on it runs split-voxel');
+  P := McxPlanFor('nvidia', 'voxel', 'diffusive');
+  Ok(P.Backend = mbMCX, 'an NVIDIA card on a voxel grid runs MCX');
+  P := McxPlanFor('nvidia', 'shapes', 'diffusive');
+  Ok(P.Backend = mbMCX, 'diffusive shapes are rasterised for MCX');
+  P := McxPlanFor('nvidia', 'shapes', 'lowscatter');
+  Ok((P.Backend = mbVKMMC) and not P.Svmc, 'low-scattering shapes run vkmmc');
+  P := McxPlanFor('amd', 'shapes', 'lowscatter');
+  Ok(P.Backend = mbVKMMC, 'on any card with Vulkan');
+  P := McxPlanFor('cpu', 'shapes', 'lowscatter');
+  Ok((P.Backend = mbMCXCL) and P.Svmc, 'but on the processor they stay split-voxel MCX-CL');
+  P := McxPlanFor('amd', 'mesh', 'diffusive');
+  Ok((P.Backend = mbMMC) and (P.Compute = 'opencl'), 'a mesh on an AMD card is MMC on OpenCL');
 end;
 
 
@@ -982,6 +1027,7 @@ begin
   TestProgressStream;
   TestDevices;
   TestArgs;
+  TestPlan;
   {$IFDEF UNIX}
   TestRunner;
   {$ENDIF}

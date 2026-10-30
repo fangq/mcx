@@ -33,7 +33,7 @@ type
     lowest mode it appears in rather than a set. }
   TMcxLevel = (mlWizard, mlExpert);
 
-  TMcxBackend  = (mbMCX, mbMCXCL, mbMMC, mbHIP);
+  TMcxBackend  = (mbMCX, mbMCXCL, mbMMC, mbHIP, mbVKMMC);
   TMcxBackends = set of TMcxBackend;
 
   TMcxDomain   = (mdVoxel, mdShapes, mdMesh);

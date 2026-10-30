@@ -177,6 +177,11 @@ procedure McxSplitOutput(var ABuf: string; ALines: TStrings);
   nothing else distinguishes them. }
 function McxProgressOf(const ATail: string; out APercent: Integer): Boolean;
 
+{ The percentage in one of vkmmc's batch lines, "  batch 2: 305843 photons
+  (830131/1000000)": done over total, in the brackets that end the line.
+  vkmmc has no progress bar; each batch it launches is a line of its own. }
+function McxBatchProgressOf(const ALine: string; out APercent: Integer): Boolean;
+
 { The command line for a simulation.  Short, because the JSON carries the
   simulation -- which is why the old GUI's 230 lines of flag assembly are not
   here.
@@ -205,7 +210,7 @@ function McxCommandLine(const AExe, AInputFile: string;
 implementation
 
 const
-  ExeNames: array[TMcxBackend] of string = ('mcx', 'mcxcl', 'mmc', 'mcx');
+  ExeNames: array[TMcxBackend] of string = ('mcx', 'mcxcl', 'mmc', 'mcx', 'vkmmc');
 
 function McxPlanFor(const AProcessor, ADomain, AMedia: string): TMcxPlan;
 begin
@@ -250,18 +255,26 @@ begin
     Exit;
   end;
 
+  { Shapes in a low-scattering medium are traced as the surfaces they are:
+    vkmmc triangulates them and follows the rays against the triangles, on
+    any card with Vulkan, so a curved boundary is curved rather than the
+    split-voxel approximation of one.  Not on the processor, where Vulkan is
+    rarely there to be had. }
+  if (ADomain = 'shapes') and (AMedia = 'lowscatter') and (AProcessor <> 'cpu') then
+  begin
+    Result.Backend := mbVKMMC;
+    Result.Name := 'VKMMC on Vulkan';
+    Exit;
+  end;
+
   { Everything else is a voxel grid, whether the voxels come from a file or
-    from shapes rasterised into one. }
+    from shapes rasterised into one.  An AMD card runs MCX-CL: the ROCm build
+    of mcx is not part of the release packages. }
   Result.Svmc := AMedia = 'lowscatter';
   if AProcessor = 'nvidia' then
   begin
     Result.Backend := mbMCX;
     Result.Name := 'MCX on CUDA';
-  end
-  else if AProcessor = 'amd' then
-  begin
-    Result.Backend := mbHIP;
-    Result.Name := 'MCX on ROCm';
   end
   else
   begin
@@ -274,7 +287,7 @@ end;
 
 function McxBackendName(ABackend: TMcxBackend): string;
 const
-  Names: array[TMcxBackend] of string = ('mcx', 'mcxcl', 'mmc', 'mcx-hip');
+  Names: array[TMcxBackend] of string = ('mcx', 'mcxcl', 'mmc', 'mcx-hip', 'vkmmc');
 begin
   Result := Names[ABackend];
 end;
@@ -417,6 +430,26 @@ begin
     end;
   end;
   SetLength(Result, n);
+end;
+
+function McxBatchProgressOf(const ALine: string; out APercent: Integer): Boolean;
+var
+  S: string;
+  Open, Slash: Integer;
+  Done, Total: Int64;
+begin
+  Result := False;
+  APercent := -1;
+  S := Trim(ALine);
+  if (Copy(S, 1, 6) <> 'batch ') or (S = '') or (S[Length(S)] <> ')') then Exit;
+  Open := LastDelimiter('(', S);
+  Slash := LastDelimiter('/', S);
+  if (Open = 0) or (Slash < Open) then Exit;
+  Done := StrToInt64Def(Copy(S, Open + 1, Slash - Open - 1), -1);
+  Total := StrToInt64Def(Copy(S, Slash + 1, Length(S) - Slash - 1), -1);
+  if (Done < 0) or (Total <= 0) or (Done > Total) then Exit;
+  APercent := Done * 100 div Total;
+  Result := True;
 end;
 
 function McxProgressOf(const ATail: string; out APercent: Integer): Boolean;
@@ -596,7 +629,7 @@ function McxDebugArg(const AFlags: string; ABackend: TMcxBackend): string;
 const
   { mcx: debugflag[] = R M P T, one bit each, in that order.
     mmc: S C B W D I O X A T R P E M -- so its progress bit is 2048. }
-  ProgressBit: array[TMcxBackend] of Integer = (4, 4, 2048, 4);
+  ProgressBit: array[TMcxBackend] of Integer = (4, 4, 2048, 4, 4);
 var
   i, Mask: Integer;
   Numeric: Boolean;
@@ -623,6 +656,7 @@ begin
   if S = 'mcxcl' then Result := mbMCXCL
   else if S = 'mmc' then Result := mbMMC
   else if S = 'mcx-hip' then Result := mbHIP
+  else if S = 'vkmmc' then Result := mbVKMMC
   else Result := mbMCX;
 end;
 
@@ -641,15 +675,18 @@ begin
     Result.Add(S);
   end;
 
+  { vkmmc numbers its Vulkan devices from 0 and takes one, not mcx's mask,
+    and has no workload split or autopilot to turn off: it is left to pick
+    its own device and thread count. }
   S := ARun.AsStr('@run.device', '');
-  if S <> '' then
+  if (S <> '') and (BackendOf(ARun) <> mbVKMMC) then
   begin
     Result.Add('-G');
     Result.Add(S);
   end;
 
   S := ARun.AsStr('@run.workload', '');
-  if S <> '' then
+  if (S <> '') and (BackendOf(ARun) <> mbVKMMC) then
   begin
     Result.Add('-W');
     Result.Add(S);
@@ -657,7 +694,7 @@ begin
 
   { Thread and block size are only meaningful with autopilot off, and mcx
     wants to be told so explicitly. }
-  if not ADoc.AsBool('Session.DoAutoThread') then
+  if not ADoc.AsBool('Session.DoAutoThread') and (BackendOf(ARun) <> mbVKMMC) then
   begin
     Result.Add('-A');
     Result.Add('0');
@@ -805,6 +842,13 @@ begin
           Synchronize(@SayProgress);
         end;
         Continue;
+      end;
+      { vkmmc's batches are progress and worth reading too, so they are
+        counted and still logged. }
+      if McxBatchProgressOf(Lines[i], FPercent) and (FPercent <> FLastPercent) then
+      begin
+        FLastPercent := FPercent;
+        Synchronize(@SayProgress);
       end;
 
       FEmit := Lines[i];

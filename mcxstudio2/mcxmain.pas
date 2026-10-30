@@ -3087,7 +3087,7 @@ end;
 function TfmMain.Environment: string;
 const
   BackendNames: array[TMcxBackend] of string =
-    ('mcx', 'mcxcl', 'mmc', 'mcx-hip');
+    ('mcx', 'mcxcl', 'mmc', 'mcx-hip', 'vkmmc');
 var
   B: TMcxBackend;
   Exe: string;
@@ -4151,6 +4151,7 @@ begin
   if S = 'mcxcl' then Result := mbMCXCL
   else if S = 'mmc' then Result := mbMMC
   else if S = 'mcx-hip' then Result := mbHIP
+  else if S = 'vkmmc' then Result := mbVKMMC
   else Result := mbMCX;
 end;
 
@@ -4255,8 +4256,12 @@ begin
     { A run that worked has written its result beside the input, named after
       the session.  Showing it is the whole point of having run it. }
     Guess := ExtractFilePath(FDoc.FileName) + FDoc.AsStr('Session.ID', 'mcx');
+    { vkmmc writes its volume as <session>.jdat, the name mcxcl gives a
+      trajectory only with _traj in front of it. }
     if FileExists(Guess + '.jnii') then ShowResult(Guess + '.jnii')
-    else if FileExists(Guess + '.bnii') then ShowResult(Guess + '.bnii');
+    else if FileExists(Guess + '.bnii') then ShowResult(Guess + '.bnii')
+    else if (CurrentBackend = mbVKMMC) and FileExists(Guess + '.jdat') then
+      ShowResult(Guess + '.jdat');
     { What each detector caught, when the run was asked for that. }
     for i := 0 to High(TrajExts) do
       if FileExists(Guess + '_detp' + TrajExts[i]) then
