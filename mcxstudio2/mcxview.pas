@@ -70,6 +70,16 @@ type
     FDomainKey: string;
     FDomainShown: Boolean;
     FInDomain: Boolean;
+    { The last result put on the card, kept so that the display bar can
+      switch between it and the domain it was computed in without reading
+      the file again.  A reference, not a copy: nothing writes into an array
+      once it has been read. }
+    FResult: TMcxArray;
+    FHasResult: Boolean;
+    FShowInput: Boolean;
+    { Set while the switch puts a volume back, so that the camera stays where
+      it was rather than being aimed again. }
+    FSwitching: Boolean;
     { A VolumeFile that is itself a .json of Shapes -- how the quick-test and
       skin-vessel examples build their domains -- read once per change. }
     FShapeFileKey: string;
@@ -186,6 +196,7 @@ type
     procedure RenderScene(AWidth, AHeight: Integer; AFlat: Boolean);
     function  PickAt(AX, AY: Integer): Integer;
     function  GetHasVolume: Boolean;
+    procedure SetShowInput(AValue: Boolean);
     { The Log scale box, where the volume has a log window to draw it in. }
     function  UseLog: Boolean;
     procedure DrawVolume(const AMVP: TMcxMat4);
@@ -214,6 +225,14 @@ type
     function ShowVolume(const AArray: TMcxArray;
       ALabels: Boolean = False): Boolean;
     procedure ClearVolume;
+    { A run's output is on the card, or is kept off it by ShowInput: a volume
+      or a set of photon paths. }
+    function  HasOutput: Boolean;
+    { The input domain -- the shapes, or the label volume -- in place of the
+      output, which is kept to switch back to.  A new result turns it off. }
+    property ShowInput: Boolean read FShowInput write SetShowInput;
+    { Drops the kept output, for a document that is not the one it came from. }
+    procedure ForgetOutput;
     { 0 for maximum intensity, 1 for accumulation. }
     { Everything below is a uniform: setting one is a repaint, not an upload,
       which is why the display controls can be dragged live. }
@@ -423,7 +442,7 @@ begin
 
   FRaster.Lines(FLines.Raw, 0, FLines.Count);
 
-  if FTrajCount > 0 then
+  if (FTrajCount > 0) and not FShowInput then
   begin
     if (FIdLo <= FTrajFirst) and (FIdHi >= FTrajLast) then
       FRaster.Lines(FTraj.Raw, 0, FTraj.Count)
@@ -833,9 +852,51 @@ begin
   if Result then
   begin
     FSceneKey := Format('volume %d %d %d', [nx, ny, nz]);
-    FitView;
+    if not FSwitching then FitView;
+    if not (FInDomain or FSwitching) then
+    begin
+      FResult := AArray;
+      FHasResult := True;
+      FShowInput := False;
+    end;
   end;
 
+  Invalidate;
+end;
+
+function TMcxView.HasOutput: Boolean;
+begin
+  Result := FHasResult or (FTrajCount > 0);
+end;
+
+procedure TMcxView.ForgetOutput;
+begin
+  FResult.Dims := nil;
+  FResult.Data := nil;
+  FHasResult := False;
+  FShowInput := False;
+end;
+
+procedure TMcxView.SetShowInput(AValue: Boolean);
+begin
+  if AValue = FShowInput then Exit;
+  FShowInput := AValue;
+  FSwitching := True;
+  try
+    if AValue then
+    begin
+      { The output off the card, and the domain's own volume back on it if
+        the document has one: a key that matches nothing is what has
+        AddDomainVolume read it again. }
+      if not FDomainShown then ClearVolume;
+      FDomainKey := #0;
+      AddDomainVolume;
+    end
+    else if FHasResult then
+      ShowVolume(FResult);
+  finally
+    FSwitching := False;
+  end;
   Invalidate;
 end;
 
@@ -1125,6 +1186,8 @@ begin
       'to keep", or run fewer photons.', [Cut, Ends]));
 
   Result := FTrajCount > 0;
+  { New paths are output to look at, whatever the switch was left on. }
+  if Result then ShowInput := False;
   Invalidate;
 end;
 
@@ -1152,7 +1215,7 @@ procedure TMcxView.DrawTrajectory;
 var
   First, Last: Integer;
 begin
-  if FTrajCount = 0 then Exit;
+  if (FTrajCount = 0) or FShowInput then Exit;
   if (FIdLo <= FTrajFirst) and (FIdHi >= FTrajLast) then
   begin
     FTraj.Draw;
@@ -1982,6 +2045,9 @@ begin
     end;
   end;
 
+  { A result on the card stays there until the switch asks for the domain,
+    which reads it afresh then. }
+  if FHasResult and not FShowInput then Exit;
   if Key = FDomainKey then Exit;
   FDomainKey := Key;
 

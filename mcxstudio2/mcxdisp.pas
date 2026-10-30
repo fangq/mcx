@@ -29,6 +29,12 @@ type
     FHead: TPanel;
     FTitle: TLabel;
     FBody: TPanel;
+    { Output or input: what a run wrote, or the domain it ran in. }
+    FShow: TComboBox;
+    FShowRow: TPanel;
+    { The rows that style a volume, hidden when there is none to style. }
+    FVolRows: array of TPanel;
+    FHasIds: Boolean;
     FMap: TComboBox;
     FStyle: TComboBox;
     FLog: TCheckBox;
@@ -52,17 +58,21 @@ type
     function  AddRow(const ACaption: string): TPanel;
     function  AddSlider(AParent: TWinControl; APosition: Integer): TTrackBar;
     function  AddNumber(AParent: TWinControl; AValue: Integer): TSpinEdit;
+    procedure KeepVolRow(AHost: TPanel);
     procedure HeadClick(Sender: TObject);
     procedure IdChanged(Sender: TObject);
     procedure PushIds(ALo, AHi: Integer);
     procedure Changed(Sender: TObject);
+    procedure ShowChanged(Sender: TObject);
     procedure SlabChanged(Sender: TObject);
     procedure Layout;
   public
     constructor Create(AHost: TWinControl; AView: TMcxView);
-    { Shown only when there is a volume: with no data loaded every control
-      here does nothing, and a row of dead sliders reads as a broken window. }
-    procedure SetHasVolume(AValue: Boolean);
+    { Follows the view: the volume rows only when there is a volume, the
+      output/input switch only once a run has written something, and the
+      bar not at all when neither -- a row of dead sliders reads as a broken
+      window. }
+    procedure Sync;
     { Puts the slab back to the whole volume. }
     procedure ResetSlab;
     { Shows the photon range row and scales it to the file just loaded.
@@ -80,6 +90,7 @@ const
   MapNames = 'Jet (blue to red)'#10'Hot (black to white)'#10'Viridis'#10 +
     'Cool (cyan to magenta)'#10'Greyscale';
   StyleNames = 'Maximum intensity'#10'Accumulated (translucent)';
+  ShowNames = 'Simulation output'#10'Input domain';
   AxisNames: array[0..2] of string = ('X range', 'Y range', 'Z range');
   RowHeight = 26;
   RowGap = 2;
@@ -137,6 +148,20 @@ begin
   FBody.BevelOuter := bvNone;
   FBody.Caption := '';
 
+  Row := AddRow('Show');
+  FShowRow := TPanel(Row.Parent);
+  FShow := TComboBox.Create(Row);
+  FShow.Parent := Row;
+  FShow.Align := alClient;
+  FShow.Style := csDropDownList;
+  FShow.Items.Text := ShowNames;
+  FShow.ItemIndex := 0;
+  FShow.OnChange := @ShowChanged;
+  FShow.Hint := 'The domain that was simulated -- its shapes or its label ' +
+    'volume -- or what the run wrote.  Switching back does not read the ' +
+    'output again.';
+  FShow.ShowHint := True;
+
   Row := AddRow('Colour map');
   FMap := TComboBox.Create(Row);
   FMap.Parent := Row;
@@ -149,8 +174,10 @@ begin
   FMap.Hint := 'How values are coloured.  Viridis keeps its lightness even, ' +
     'so it does not invent an edge where the data has none.';
   FMap.ShowHint := True;
+  KeepVolRow(Row);
 
   Row := AddRow('Rendering');
+  KeepVolRow(Row);
   { Log first on the right, so the combo gets what is left. }
   FLog := TCheckBox.Create(Row);
   FLog.Parent := Row;
@@ -176,6 +203,7 @@ begin
   FStyle.ShowHint := True;
 
   Row := AddRow('Threshold');
+  KeepVolRow(Row);
   FFloor := AddSlider(Row, 0);
   FFloor.Align := alClient;
   FFloor.OnChange := @Changed;
@@ -184,6 +212,7 @@ begin
     'hides what is behind it.';
 
   Row := AddRow('Opacity');
+  KeepVolRow(Row);
   FOpacity := AddSlider(Row, 25);
   FOpacity.Align := alClient;
   FOpacity.OnChange := @Changed;
@@ -250,6 +279,7 @@ begin
   for i := 0 to 2 do
   begin
     Row := AddRow(AxisNames[i]);
+    KeepVolRow(Row);
     { Two sliders sharing the row, left half and right half, without either
       of them having to know how wide the row is. }
     Row.ChildSizing.Layout := cclLeftToRightThenTopToBottom;
@@ -311,6 +341,12 @@ begin
   Result := Host;
 end;
 
+procedure TMcxDisplayBar.KeepVolRow(AHost: TPanel);
+begin
+  SetLength(FVolRows, Length(FVolRows) + 1);
+  FVolRows[High(FVolRows)] := TPanel(AHost.Parent);
+end;
+
 { A number box, for the identifier a bar cannot land on. }
 function TMcxDisplayBar.AddNumber(AParent: TWinControl;
   AValue: Integer): TSpinEdit;
@@ -342,10 +378,15 @@ end;
   added before anything has been laid out, so at this point AutoSize has
   nothing to measure. }
 procedure TMcxDisplayBar.Layout;
+var
+  i, n: Integer;
 begin
   if FOpen then FTitle.Caption := '- Display'
   else FTitle.Caption := '+ Display';
-  FBody.Height := FRows * McxScale96(RowHeight + 2 * RowGap);
+  n := 0;
+  for i := 0 to FBody.ControlCount - 1 do
+    if FBody.Controls[i].Visible then Inc(n);
+  FBody.Height := n * McxScale96(RowHeight + 2 * RowGap);
   FBody.Visible := FOpen;
   if FOpen then FRoot.Height := FHead.Height + FBody.Height
   else FRoot.Height := FHead.Height;
@@ -366,6 +407,13 @@ begin
   FView.Threshold := FFloor.Position / 100;
   FView.Opacity := FOpacity.Position / 100;
   FView.Redraw;
+end;
+
+procedure TMcxDisplayBar.ShowChanged(Sender: TObject);
+begin
+  if (FView = nil) or (FIdSyncing > 0) then Exit;
+  FView.ShowInput := FShow.ItemIndex = 1;
+  Sync;
 end;
 
 procedure TMcxDisplayBar.SlabChanged(Sender: TObject);
@@ -460,7 +508,8 @@ var
   Num: TSpinEdit;
   i: Integer;
 begin
-  FIdRow.Parent.Visible := AFirst <= ALast;
+  FHasIds := AFirst <= ALast;
+  Sync;
   if AFirst > ALast then Exit;
   FIdFirst := AFirst + IdOffset;
   FIdLast := ALast + IdOffset;
@@ -493,9 +542,26 @@ begin
   end;
 end;
 
-procedure TMcxDisplayBar.SetHasVolume(AValue: Boolean);
+procedure TMcxDisplayBar.Sync;
+var
+  i: Integer;
+  Vol, Output, Input: Boolean;
 begin
-  FRoot.Visible := AValue;
+  Vol := (FView <> nil) and FView.HasVolume;
+  Output := (FView <> nil) and FView.HasOutput;
+  Input := Output and FView.ShowInput;
+  Inc(FIdSyncing);
+  try
+    FShow.ItemIndex := Ord(Input);
+  finally
+    Dec(FIdSyncing);
+  end;
+  FShowRow.Visible := Output;
+  for i := 0 to High(FVolRows) do FVolRows[i].Visible := Vol;
+  { The paths are output, and go with it. }
+  FIdRow.Parent.Visible := FHasIds and not Input;
+  FRoot.Visible := Vol or Output;
+  Layout;
 end;
 
 end.

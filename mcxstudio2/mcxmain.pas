@@ -2912,12 +2912,10 @@ begin
   if FView = nil then Exit;
   FView.ClearVolume;
   FView.ClearTrajectory;
+  FView.ForgetOutput;
   if FDisplay <> nil then
-  begin
-    FDisplay.SetHasVolume(False);
-    { An empty range hides the photon row. }
+    { An empty range hides the photon row, and the rest follows the view. }
     FDisplay.SetTrajectory(1, 0);
-  end;
 end;
 
 procedure TfmMain.GuessRunSettings;
@@ -3362,6 +3360,8 @@ function TfmMain.SelfTestEditors: Integer;
 var
   Fails: Integer;
   Url: string;
+  Vol: TMcxArray;
+  Vi: Integer;
 
   procedure Expect(const AWhat, AGot, AWant: string);
   begin
@@ -3615,6 +3615,27 @@ begin
   FShapes.AddShape('Box');
   Expect('box after the layers', Js('Shapes[4].Box.Tag'), '4');
   Expect('enough media already: none added', IntToStr(FDoc.Find('Domain.Media').Count), '7');
+
+  { The 3-D view switches between a run's output and the input domain, and
+    back, without the output being read again. }
+  Vol.Kind := akSingle;
+  SetLength(Vol.Dims, 3);
+  Vol.Dims[0] := 2; Vol.Dims[1] := 2; Vol.Dims[2] := 2;
+  SetLength(Vol.Data, 8 * SizeOf(Single));
+  for Vi := 0 to 7 do PSingle(@Vol.Data[Vi * SizeOf(Single)])^ := Vi + 1;
+  if FView.ShowVolume(Vol) then
+  begin
+    FDisplay.Sync;
+    Expect('a result is output', BoolToStr(FView.HasOutput, True), 'True');
+    FView.ShowInput := True;
+    Expect('input view hides the output', BoolToStr(FView.HasVolume, True), 'False');
+    FView.ShowInput := False;
+    Expect('output view puts it back', BoolToStr(FView.HasVolume, True), 'True');
+    DropResult;
+    Expect('a new document has no output', BoolToStr(FView.HasOutput, True), 'False');
+  end
+  else
+    WriteLn('  skip  output/input switch: the view took no volume');
 
   { A mesh block named Shapes, as mmc --dumpjson writes it, is edited where
     it is rather than shadowed by a new Mesh. }
@@ -5101,7 +5122,6 @@ begin
       { The range row is scaled to the file that was just read, so the bar
         covers the photons that are actually in it. }
       FDisplay.SetTrajectory(FView.PhotonFirst, FView.PhotonLast);
-      FDisplay.SetHasVolume(True);
       pcView.ActivePage := tsPreview;
     end
     else
@@ -5134,7 +5154,7 @@ begin
   if FView.ShowVolume(A) then
   begin
     FDisplay.ResetSlab;
-    FDisplay.SetHasVolume(True);
+    FDisplay.Sync;
   end
   else
   begin
@@ -6247,7 +6267,7 @@ begin
     begin
       FView.VolumeChanged := False;
       FDisplay.ResetSlab;
-      FDisplay.SetHasVolume(FView.HasVolume);
+      FDisplay.Sync;
     end;
   end;
 
