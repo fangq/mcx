@@ -126,7 +126,12 @@ type
     FSteps: Single;
     FLogScale: Boolean;
     FClipLo, FClipHi: TMcxVec3;
+    { The window on both scales, worked out when the volume is loaded, so the
+      Log scale box can be ticked either way afterwards.  A volume with
+      nothing above zero, or of labels, has no log window. }
     FVolLow, FVolHigh: Single;
+    FLogLow, FLogHigh: Single;
+    FCanLog: Boolean;
     FCamera: TMcxCamera;
     { Latches, so a driver that cannot give us a core profile is reported
       once rather than on every repaint. }
@@ -181,6 +186,8 @@ type
     procedure RenderScene(AWidth, AHeight: Integer; AFlat: Boolean);
     function  PickAt(AX, AY: Integer): Integer;
     function  GetHasVolume: Boolean;
+    { The Log scale box, where the volume has a log window to draw it in. }
+    function  UseLog: Boolean;
     procedure DrawVolume(const AMVP: TMcxMat4);
     procedure DrawTrajectory;
     function  FirstSegmentOf(AId: Integer): Integer;
@@ -433,9 +440,17 @@ begin
 
   if GetHasVolume then
   begin
-    FSoftVol.Low := FVolLow;
-    FSoftVol.High := FVolHigh;
-    FSoftVol.LogScale := FLogScale;
+    FSoftVol.LogScale := UseLog;
+    if UseLog then
+    begin
+      FSoftVol.Low := FLogLow;
+      FSoftVol.High := FLogHigh;
+    end
+    else
+    begin
+      FSoftVol.Low := FVolLow;
+      FSoftVol.High := FVolHigh;
+    end;
     FSoftVol.Style := FStyle;
     FSoftVol.Map := FMap;
     FSoftVol.Floor := FFloor;
@@ -662,6 +677,11 @@ begin
   else Result := (FVolume <> nil) and FVolume.Loaded;
 end;
 
+function TMcxView.UseLog: Boolean;
+begin
+  Result := FLogScale and FCanLog;
+end;
+
 procedure TMcxView.ClearVolume;
 begin
   FreeAndNil(FVolume);
@@ -676,7 +696,7 @@ var
   nx, ny, nz: Integer;
   i, n, Spoiled: Int64;
   Buf: array of Single;
-  V, Lo, Hi: Double;
+  V, Lo, Hi, Pos: Double;
   Any: Boolean;
 begin
   Result := False;
@@ -702,6 +722,7 @@ begin
   SetLength(Buf, n);
   Lo := 0;
   Hi := 0;
+  Pos := 0;
   Any := False;
   Spoiled := 0;
   for i := 0 to n - 1 do
@@ -728,6 +749,8 @@ begin
       if V < Lo then Lo := V;
       if V > Hi then Hi := V;
     end;
+    { the smallest value above zero, where the log window starts }
+    if (V > 0) and ((Pos = 0) or (V < Pos)) then Pos := V;
   end;
 
   { Nothing to draw and nothing to scale it by.  Worth naming rather than
@@ -743,43 +766,39 @@ begin
   end;
 
   { The ones that are not numbers are held down to the floor of the window,
-    which is where the transparency threshold drops them: an unknown voxel
-    should read as empty rather than as the brightest thing in the picture,
-    which is what a NaN interpolated through GL_LINEAR does to the eight
-    texels around it.  Zero would do for a fluence map and not for a Jacobian,
-    whose minimum is negative -- so it is the floor itself, found above, and
-    a second pass over the floats rather than a guess during the first. }
+    and to zero if that is higher, which is where both scales drop them: an
+    unknown voxel should read as empty rather than as the brightest thing in
+    the picture, which is what a NaN interpolated through GL_LINEAR does to
+    the eight texels around it.  Zero alone would do for a fluence map and not
+    for a Jacobian, whose minimum is negative -- so it is the floor itself,
+    found above, and a second pass over the floats rather than a guess during
+    the first. }
   if Spoiled > 0 then
   begin
     for i := 0 to n - 1 do
-      if IsNan(Buf[i]) or IsInfinite(Buf[i]) then Buf[i] := Lo;
+      if IsNan(Buf[i]) or IsInfinite(Buf[i]) then Buf[i] := Min(Lo, 0);
     Say(Format('%d of %d values are not numbers, and are drawn as empty',
       [Spoiled, n]));
   end;
 
-  { Fluence spans many decades, so the window is set on the log of it and
-    the shader takes the log too.  A flat volume falls back to its own
-    range, which at least shows something. }
-  if ALabels then
+  { Fluence spans many decades, so the log window runs from the smallest
+    value above zero to the largest, and the shader takes the log too.  The
+    whole of it rather than a fixed number of decades: the far tail of a
+    fluence map is what shows the box it is in, and the Threshold slider is
+    there to take it off again.  Labels are only ever linear, from zero, so a
+    volume of one label throughout is a solid block. }
+  if ALabels and (Lo > 0) then Lo := 0;
+  FCanLog := (not ALabels) and (Pos > 0);
+  if FCanLog then
   begin
-    FLogScale := False;
-    if Lo > 0 then Lo := 0;
+    FLogHigh := Ln(Hi);
+    FLogLow := Ln(Pos);
+    { a flat volume, drawn at the top of its window rather than not at all }
+    if FLogHigh <= FLogLow then FLogLow := FLogHigh - 1;
   end;
-  if FLogScale and (Hi > 0) then
-  begin
-    FVolHigh := Ln(Hi);
-    if Lo > 0 then FVolLow := Ln(Lo) else FVolLow := FVolHigh - 12;
-    { Twelve decades of e is about five of ten, which is the span mcxcloud
-      shows by default and about where a fluence map stops being noise. }
-    if FVolHigh - FVolLow > 12 then FVolLow := FVolHigh - 12;
-  end
-  else
-  begin
-    FLogScale := False;
-    FVolLow := Lo;
-    FVolHigh := Hi;
-    if FVolHigh <= FVolLow then FVolHigh := FVolLow + 1;
-  end;
+  FVolLow := Lo;
+  FVolHigh := Hi;
+  if FVolHigh <= FVolLow then FVolHigh := FVolLow + 1;
 
   FVolNx := nx; FVolNy := ny; FVolNz := nz;
   if FSoft then
@@ -903,9 +922,10 @@ begin
     FVolShader.SetFloat('uSteps', Max(48, FSteps / 3))
   else
     FVolShader.SetFloat('uSteps', FSteps);
-  FVolShader.SetVec2('uClim', FVolLow, FVolHigh);
+  if UseLog then FVolShader.SetVec2('uClim', FLogLow, FLogHigh)
+  else FVolShader.SetVec2('uClim', FVolLow, FVolHigh);
   FVolShader.SetInt('uStyle', FStyle);
-  FVolShader.SetInt('uLog', Ord(FLogScale));
+  FVolShader.SetInt('uLog', Ord(UseLog));
   FVolShader.SetInt('uVolume', 0);
 
   FVolume.Bind(0);

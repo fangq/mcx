@@ -563,16 +563,22 @@ var
        (At(I0, J1, K1) * (1 - AX) + At(I1, J1, K1) * AX) * AY) * AZ;
   end;
 
-  { the shader's sample1: outside the slab nothing, else the windowed value,
-    dropped below the threshold }
+  { the shader's sample1: -1 for nothing there (outside the slab, zero or less
+    on a log scale, the bottom of a linear one, or below the threshold), else
+    the windowed value }
   function Sample(QX, QY, QZ: Double): Double;
   begin
     if (QX < LoC[0]) or (QY < LoC[1]) or (QZ < LoC[2]) or
-       (QX > HiC[0]) or (QY > HiC[1]) or (QZ > HiC[2]) then Exit(0);
+       (QX > HiC[0]) or (QY > HiC[1]) or (QZ > HiC[2]) then Exit(-1);
     Result := Tex(QX, QY, QZ);
-    if V^.LogScale then Result := Ln(Max(Result, 1e-12));
+    if V^.LogScale then
+    begin
+      if Result <= 0 then Exit(-1);
+      Result := Ln(Result);
+    end;
     Result := EnsureRange((Result - V^.Low) / Max(V^.High - V^.Low, 1e-12), 0, 1);
-    if Result < V^.Floor then Result := 0;
+    if not V^.LogScale and (Result <= 0) then Exit(-1);
+    if Result < V^.Floor then Result := -1;
   end;
 
   procedure Put(const C: TMcxVec3; A: Double);
@@ -693,7 +699,7 @@ begin
       t := tn + Step * Jit;
       if V^.Style = 0 then
       begin
-        Best := 0;
+        Best := -1;
         a := 0;
         while (t <= tf) and (a < 512) do
         begin
@@ -702,7 +708,7 @@ begin
           t := t + Step;
           Inc(a);
         end;
-        if Best > 0 then Put(Ramp(V^.Map, Best), 1);
+        if Best >= 0 then Put(Ramp(V^.Map, Best), 1);
       end
       else
       begin

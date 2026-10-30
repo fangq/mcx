@@ -374,17 +374,25 @@ const
     '    return mapJet(t);'#10 +
     '}'#10 +
     ''#10 +
+    { -1 for nothing there, else 0..1 across the window.  Nothing is outside
+      the slab, a value of zero or less on a log scale, or the bottom of a
+      linear one; on a log scale the window starts at the smallest value above
+      zero, which is drawn, in the lowest colour. }
     'float sample1(vec3 p)'#10 +
     '{'#10 +
     '    if (any(lessThan(p, uMinSlice)) || any(greaterThan(p, uMaxSlice)))'#10 +
-    '        return 0.0;'#10 +
+    '        return -1.0;'#10 +
     '    float v = texture(uVolume, p).r;'#10 +
-    '    if (uLog != 0) v = log(max(v, 1e-12));'#10 +
+    '    if (uLog != 0) {'#10 +
+    '        if (v <= 0.0) return -1.0;'#10 +
+    '        v = log(v);'#10 +
+    '    }'#10 +
     '    v = clamp((v - uClim.x) / max(uClim.y - uClim.x, 1e-12), 0.0, 1.0);'#10 +
+    '    if (uLog == 0 && v <= 0.0) return -1.0;'#10 +
     { The threshold drops the sample rather than dimming it: a fluence map is
       mostly its own faint tail, and a tail drawn at low alpha still hides
       everything behind it. }
-    '    return v < uFloor ? 0.0 : v;'#10 +
+    '    return v < uFloor ? -1.0 : v;'#10 +
     '}'#10 +
     ''#10 +
     'void main()'#10 +
@@ -410,13 +418,13 @@ const
     '    float t = tnear + step * jitter;'#10 +
     ''#10 +
     '    if (uStyle == 0) {'#10 +
-    '        float best = 0.0;'#10 +
+    '        float best = -1.0;'#10 +
     '        for (int i = 0; i < 512; i++) {'#10 +
     '            if (t > tfar) break;'#10 +
     '            best = max(best, sample1(uEye + dir * t));'#10 +
     '            t += step;'#10 +
     '        }'#10 +
-    '        if (best <= 0.0) discard;'#10 +
+    '        if (best < 0.0) discard;'#10 +
     '        oColour = vec4(ramp(best), 1.0);'#10 +
     '        return;'#10 +
     '    }'#10 +
@@ -425,7 +433,7 @@ const
     '    float alpha = 0.0;'#10 +
     '    for (int i = 0; i < 512; i++) {'#10 +
     '        if (t > tfar || alpha > 0.95) break;'#10 +
-    '        float s = sample1(uEye + dir * t);'#10 +
+    '        float s = max(sample1(uEye + dir * t), 0.0);'#10 +
     { Opacity correction: without it, asking for more steps makes the same
       volume look denser. }
     '        float a = 1.0 - pow(1.0 - s * uOpacity, 512.0 / uSteps);'#10 +
