@@ -26,9 +26,13 @@ type
   { A file's contents as the text the editor shows. }
   TMcxDataLoad = function(const AFileName: string; out AText, AError: string): Boolean of object;
 
-{ Shows the dialog.  True when OK closed it, with AText what was accepted. }
-function McxEditData(AOwner: TComponent; const ATitle, AHelp, AFilter: string;
-  var AText: string; ACheck: TMcxDataCheck; ALoad: TMcxDataLoad): Boolean;
+{ Shows the dialog.  True when OK closed it, with AText what was accepted.
+  AExample, when not empty, is shown under AHelp in the editor's fixed-width
+  font: the shape of the JSON the editor takes, which a sentence describes
+  less well than a sample does. }
+function McxEditData(AOwner: TComponent; const ATitle, AHelp, AExample,
+  AFilter: string; var AText: string; ACheck: TMcxDataCheck;
+  ALoad: TMcxDataLoad): Boolean;
 
 implementation
 
@@ -93,12 +97,13 @@ begin
     MessageDlg('MCX Studio', E, mtError, [mbOK], 0);
 end;
 
-function McxEditData(AOwner: TComponent; const ATitle, AHelp, AFilter: string;
-  var AText: string; ACheck: TMcxDataCheck; ALoad: TMcxDataLoad): Boolean;
+function McxEditData(AOwner: TComponent; const ATitle, AHelp, AExample,
+  AFilter: string; var AText: string; ACheck: TMcxDataCheck;
+  ALoad: TMcxDataLoad): Boolean;
 var
   F: TMcxDataForm;
   Bar: TPanel;
-  Help: TLabel;
+  Help, Example: TLabel;
   Syn: TMcxJsonSyn;
   i: Integer;
 
@@ -133,6 +138,19 @@ begin
     Help.WordWrap := True;
     Help.BorderSpacing.Around := 8;
     Help.Caption := AHelp;
+
+    if AExample <> '' then
+    begin
+      Example := TLabel.Create(F);
+      Example.Parent := F;
+      Example.Align := alTop;
+      { Below the help: alTop siblings stack in the order of their Top. }
+      Example.Top := Help.Top + Help.Height + 1;
+      Example.BorderSpacing.Left := 24;
+      Example.BorderSpacing.Bottom := 8;
+      Example.Font.Name := McxDefaultFontName;
+      Example.Caption := AExample;
+    end;
 
     Bar := TPanel.Create(F);
     Bar.Parent := F;

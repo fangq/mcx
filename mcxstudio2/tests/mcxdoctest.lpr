@@ -19,7 +19,8 @@ uses
     test dies with "This binary has no thread support compiled in".  The GUI
     gets this from the LCL; a console program has to ask. }
   {$IFDEF UNIX}cthreads,{$ENDIF}
-  SysUtils, Classes, zstream, fpjson, mcxdoc, mcxrun, mcxjd, mcxmesh;
+  SysUtils, Classes, zstream, fpjson, jsonparser, mcxdoc, mcxrun, mcxjd, mcxmesh,
+  mcxdomain;
 
 var
   Checks, Failures: Integer;
@@ -955,6 +956,56 @@ end;
   every interior face is shared by two tetrahedra and every boundary face by
   one.  Written here rather than read from mmc's examples so the test travels
   with the repository. }
+{ The forms the Edit Mesh and Edit Volume dialogs show as examples are the
+  forms they take. }
+procedure TestDataExamples;
+var
+  D, N, E: TJSONData;
+  O: TJSONObject;
+  Err: string;
+  nx, ny, nz: Integer;
+  Fmt: string;
+begin
+  WriteLn('data dialog examples');
+  D := GetJSON('{"Mesh": {"MeshNode": [[0,0,0],[1,0,0],[0,1,0],[0,0,1]],' +
+    '"MeshElem": [[1,2,3,4,1]]}, "Media": [{"mua":0,"mus":0,"g":1,"n":1},' +
+    '{"mua":0.01,"mus":10,"g":0.9,"n":1.37}]}');
+  try
+    Ok(McxMeshFromJSON(D, N, E, Err), 'a mesh under "Mesh" with Media beside it: ' + Err);
+    N.Free; E.Free;
+  finally
+    D.Free;
+  end;
+  D := GetJSON('{"MeshNode": {"_ArrayType_": "double", "_ArraySize_": [4, 3],' +
+    '"_ArrayData_": [0,0,0, 1,0,0, 0,1,0, 0,0,1]}, "MeshElem": [[1,2,3,4,1]]}');
+  try
+    Ok(McxMeshFromJSON(D, N, E, Err), 'MeshNode as a JData array: ' + Err);
+    N.Free; E.Free;
+  finally
+    D.Free;
+  end;
+  D := GetJSON('{"_ArrayType_": "uint8", "_ArraySize_": [2, 3, 4],' +
+    '"_ArrayData_": [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2]}');
+  try
+    Ok(McxVolumeFromJSON(D, O, Err), 'a plain JData volume: ' + Err);
+    if O <> nil then
+    begin
+      McxVolumeShape(O, nx, ny, nz, Fmt);
+      Ok((nx = 2) and (ny = 3) and (nz = 4), 'and its size is read in x, y, z');
+      O.Free;
+    end;
+  finally
+    D.Free;
+  end;
+  D := GetJSON('[[[0,1],[1,1]],[[1,1],[1,2]]]');
+  try
+    Ok(McxVolumeFromJSON(D, O, Err), 'a nested list volume: ' + Err);
+    O.Free;
+  finally
+    D.Free;
+  end;
+end;
+
 procedure TestMesh;
 var
   Dir: string;
@@ -1035,6 +1086,7 @@ begin
   TestBJData;
   TestBJDataRefuses;
   TestMesh;
+  TestDataExamples;
   TestCorpus(Dir);
 
   WriteLn;

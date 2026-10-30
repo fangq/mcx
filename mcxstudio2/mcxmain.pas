@@ -4094,7 +4094,16 @@ begin
       'per tetrahedron. Copy it to use elsewhere, or paste a mesh -- ' +
       'JData arrays or plain lists of rows, and the JMesh names ' +
       'MeshVertex3/MeshTet4 too. A Media list beside them, as Load from ' +
-      'file adds from prop_<id>.dat, becomes the optical properties.',
+      'file adds from prop_<id>.dat, becomes the optical properties.  ' +
+      'The whole of it may also sit under "Mesh", as in an mmc input:',
+      '{"Mesh": {' + LineEnding +
+      '   "MeshNode": [[x1, y1, z1], [x2, y2, z2], ...],' + LineEnding +
+      '   "MeshElem": [[n1, n2, n3, n4, label], ...]},' + LineEnding +
+      ' "Media": [{"mua": 0, "mus": 0, "g": 1, "n": 1},' + LineEnding +
+      '           {"mua": 0.01, "mus": 10, "g": 0.9, "n": 1.37}, ...]}' + LineEnding +
+      'MeshNode and MeshElem may each be a JData array instead, ' +
+      '{"_ArrayType_": "double", "_ArraySize_": [N, 3], "_ArrayData_": [...]}; ' +
+      'Media is optional.',
       MeshFilter, T, @CheckMeshText, @LoadMeshText) and (T <> T0) then
       ApplyMeshText(T, Err);
   end
@@ -4107,7 +4116,12 @@ begin
       'compressed), kept in Shapes. Copy it to use elsewhere, or paste a ' +
       'volume -- a JData array, or a nested list of numbers [[[...]]] in ' +
       'x, y, z order. OK makes it the domain, and sets Dim and the volume ' +
-      'format to match.',
+      'format to match.  Either of these, on its own (not inside Shapes):',
+      '{"_ArrayType_": "uint8", "_ArraySize_": [Nx, Ny, Nz],' + LineEnding +
+      ' "_ArrayData_": [v1, v2, ...]}       (or _ArrayZipType_/_ArrayZipData_)' +
+      LineEnding + LineEnding +
+      '[[[v111, v112, ...], [v121, ...], ...], [[v211, ...], ...], ...]' +
+      LineEnding + 'Each value is a medium label: 0 is outside the domain.',
       VolumeFilter, T, @CheckVolumeText, @LoadVolumeText) and (T <> T0) then
       ApplyVolumeText(T, Err);
   end;
