@@ -529,6 +529,7 @@ type
     procedure BenchmarkClick(Sender: TObject);
     procedure ViewPick(Sender: TObject; const AInfo: TMcxPickInfo);
     procedure ShapeSelected(Sender: TObject; AIndex: Integer);
+    procedure ShapeLabelAdded(Sender: TObject; ATag: Integer);
     procedure TableChanged(Sender: TObject);
     function  Environment: string;
     procedure ShowHelpForFocus;
@@ -904,6 +905,7 @@ begin
   FShapes := TMcxShapes.Create(pnShapeEdit);
   FShapes.OnChange := @TableChanged;
   FShapes.OnSelect := @ShapeSelected;
+  FShapes.OnNewLabel := @ShapeLabelAdded;
 
   FView := TMcxView.Create(pnGL);
   FView.OnLog := @ViewLog;
@@ -3591,6 +3593,29 @@ begin
   Expect('DetParam1 disabled without one',
     BoolToStr(edDetParam1.Enabled, True), 'False');
 
+  { A new shape takes the label after the highest in use, and the media
+    table grows a copy of its last row for every label it lacks. }
+  FDoc.LoadFromString('{"Domain":{"Dim":[60,60,60],"Media":[' +
+    '{"mua":0,"mus":0,"g":1,"n":1},{"mua":0.005,"mus":1,"g":0.01,"n":1.37}]},' +
+    '"Shapes":[{"Grid":{"Size":[60,60,60],"Tag":1}}],' +
+    '"Optode":{"Source":{"Pos":[30,30,0],"Dir":[0,0,1]}}}');
+  LoadAllBindings;
+  FMedia.Reload;
+  FShapes.Reload;
+  FShapes.AddShape('Sphere');
+  Expect('new sphere takes the next label', Js('Shapes[1].Sphere.Tag'), '2');
+  Expect('media grows to the new label', IntToStr(FDoc.Find('Domain.Media').Count), '3');
+  Expect('new medium copies the last', Js('Domain.Media[2]'), Js('Domain.Media[1]'));
+  FShapes.AddShape('ZLayers');
+  Expect('new layer row takes the next label', Js('Shapes[2].ZLayers[0][2]'), '3');
+  Expect('media grows for a layer', IntToStr(FDoc.Find('Domain.Media').Count), '4');
+  FShapes.AddShape('Origin');
+  Expect('Origin adds no medium', IntToStr(FDoc.Find('Domain.Media').Count), '4');
+  FDoc.SetNum('Domain.Media[6].mua', 0.01);
+  FShapes.AddShape('Box');
+  Expect('box after the layers', Js('Shapes[4].Box.Tag'), '4');
+  Expect('enough media already: none added', IntToStr(FDoc.Find('Domain.Media').Count), '7');
+
   { A mesh block named Shapes, as mmc --dumpjson writes it, is edited where
     it is rather than shadowed by a new Mesh. }
   FDoc.LoadFromString('{"Optode":{"Source":{"Pos":[0,0,0],"Dir":[0,0,1]}},' +
@@ -5156,6 +5181,25 @@ end;
 procedure TfmMain.ShapeSelected(Sender: TObject; AIndex: Integer);
 begin
   if FView <> nil then FView.SelectShape(AIndex);
+end;
+
+{ A shape with a label the media table has no row for is a domain mcx will
+  not run, so the table grows to cover it: each new row a copy of the last,
+  as the table's own Add button makes them, for the label to be edited from
+  rather than typed in whole. }
+procedure TfmMain.ShapeLabelAdded(Sender: TObject; ATag: Integer);
+var
+  M: TJSONData;
+  i: Integer;
+begin
+  if FMedia = nil then Exit;
+  { Bounded, not until-done: a Media that is not an array takes no rows. }
+  for i := 0 to ATag do
+  begin
+    M := FDoc.Find('Domain.Media');
+    if (M is TJSONArray) and (M.Count > ATag) then Break;
+    FMedia.AddRow;
+  end;
 end;
 
 procedure TfmMain.acBenchmarkExecute(Sender: TObject);

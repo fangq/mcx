@@ -52,6 +52,8 @@ type
   end;
 
   TMcxShapeSelect = procedure(Sender: TObject; AIndex: Integer) of object;
+  { A new command has put medium label ATag into the domain. }
+  TMcxShapeLabel = procedure(Sender: TObject; ATag: Integer) of object;
 
   { The editor.  Builds itself into a panel the designer placed, the way the
     media and detector tables do. }
@@ -77,6 +79,7 @@ type
     FLoading: Integer;
     FOnChange: TNotifyEvent;
     FOnSelect: TMcxShapeSelect;
+    FOnNewLabel: TMcxShapeLabel;
     function  Arr: TJSONArray;
     function  Count: Integer;
     function  NameOf(AIndex: Integer): string;
@@ -91,6 +94,7 @@ type
     procedure ListClick(Sender: TObject);
     procedure AddClick(Sender: TObject);
     procedure AddType(Sender: TObject);
+    procedure AddDef(AIndex: Integer);
     procedure DelClick(Sender: TObject);
     procedure MoveClick(Sender: TObject);
     procedure GridEdited(Sender: TObject; ACol, ARow: Integer;
@@ -107,8 +111,16 @@ type
       when one of its solids is clicked. }
     procedure SelectIndex(AIndex: Integer);
     function  SelectedIndex: Integer;
+    { The highest medium label any command writes, nought if none does. }
+    function  MaxTag: Integer;
+    { What picking a command off the Add menu does, callable by the
+      self-test.  False for a name mcx does not have. }
+    function  AddShape(const AName: string): Boolean;
     property OnChange: TNotifyEvent read FOnChange write FOnChange;
     property OnSelect: TMcxShapeSelect read FOnSelect write FOnSelect;
+    { Raised after a new command took the next label, so that the media
+      table can grow a row for it. }
+    property OnNewLabel: TMcxShapeLabel read FOnNewLabel write FOnNewLabel;
   end;
 
 { Every command mcx knows, in the order its own table lists them. }
@@ -375,6 +387,48 @@ var
 begin
   A := Arr;
   if A = nil then Result := 0 else Result := A.Count;
+end;
+
+{ A command's label is its Tag, or for the Layers commands the third number
+  of each row, in the short form of one row or the long form of several. }
+function TMcxShapes.MaxTag: Integer;
+var
+  A, Rows: TJSONArray;
+  D: TJSONData;
+  i, r: Integer;
+
+  procedure Take(ARow: TJSONData);
+  begin
+    if (ARow is TJSONArray) and (TJSONArray(ARow).Count > 2) and
+       (TJSONArray(ARow).Items[2].JSONType = jtNumber) and
+       (TJSONArray(ARow).Items[2].AsInteger > Result) then
+      Result := TJSONArray(ARow).Items[2].AsInteger;
+  end;
+
+begin
+  Result := 0;
+  A := Arr;
+  if A = nil then Exit;
+  for i := 0 to A.Count - 1 do
+  begin
+    if (A.Items[i].JSONType <> jtObject) or (TJSONObject(A.Items[i]).Count < 1) then
+      Continue;
+    D := TJSONObject(A.Items[i]).Items[0];
+    if D is TJSONObject then
+    begin
+      D := TJSONObject(D).Find('Tag');
+      if (D <> nil) and (D.JSONType = jtNumber) and (D.AsInteger > Result) then
+        Result := D.AsInteger;
+    end
+    else if D is TJSONArray then
+    begin
+      Rows := TJSONArray(D);
+      if (Rows.Count > 0) and (Rows.Items[0].JSONType <> jtArray) then
+        Take(Rows)
+      else
+        for r := 0 to Rows.Count - 1 do Take(Rows.Items[r]);
+    end;
+  end;
 end;
 
 { The one key a command object carries is the command's name. }
@@ -899,16 +953,38 @@ end;
   the way Ensure builds anything: writing to one past the end of the array
   creates the element, and the keys arrive in the order they are written. }
 procedure TMcxShapes.AddType(Sender: TObject);
+begin
+  AddDef(TMenuItem(Sender).Tag);
+end;
+
+function TMcxShapes.AddShape(const AName: string): Boolean;
+var
+  i: Integer;
+begin
+  Result := False;
+  for i := 0 to High(Defs) do
+    if Defs[i].Name = AName then
+    begin
+      AddDef(i);
+      Exit(True);
+    end;
+end;
+
+procedure TMcxShapes.AddDef(AIndex: Integer);
 var
   Def: TMcxShapeDef;
   Spec: TStringList;
   Key, Title, Deft, B: string;
   Nums: TStringList;
-  i, k, n, At: Integer;
+  i, k, n, At, NewTag: Integer;
 begin
   if FDoc = nil then Exit;
-  Def := Defs[TMenuItem(Sender).Tag];
+  Def := Defs[AIndex];
   At := Count;
+  { A new shape is nearly always a new medium -- a sphere of the same label
+    as the grid around it is not there at all -- so it takes the next label
+    up rather than the definition's 1. }
+  NewTag := MaxTag + 1;
   B := Format('Shapes[%d].%s', [At, Def.Name]);
 
   case Def.Kind of
@@ -937,8 +1013,11 @@ begin
           Nums.Delimiter := ' ';
           Nums.DelimitedText := Deft;
           for k := 0 to Nums.Count - 1 do
-            FDoc.SetNum(Format('%s[0][%d]', [B, k]),
-              StrToFloatDef(Nums[k], 0));
+            if k = 2 then
+              FDoc.SetNum(Format('%s[0][%d]', [B, k]), NewTag)
+            else
+              FDoc.SetNum(Format('%s[0][%d]', [B, k]),
+                StrToFloatDef(Nums[k], 0));
         finally
           Nums.Free;
         end;
@@ -954,7 +1033,9 @@ begin
           try
             Nums.Delimiter := ' ';
             Nums.DelimitedText := Deft;
-            if n = 1 then
+            if Key = 'Tag' then
+              FDoc.SetNum(B + '.' + Key, NewTag)
+            else if n = 1 then
               FDoc.SetNum(B + '.' + Key, StrToFloatDef(Nums[0], 0))
             else
               for k := 0 to n - 1 do
@@ -974,6 +1055,10 @@ begin
   SelectIndex(At);
   FList.ItemIndex := At;
   BuildProps;
+  { Every object command carries a Tag and every Layers row a label; Name
+    and Origin carry neither. }
+  if (Def.Kind in [skObject, skRows]) and Assigned(FOnNewLabel) then
+    FOnNewLabel(Self, NewTag);
   if Assigned(FOnChange) then FOnChange(Self);
   if Assigned(FOnSelect) then FOnSelect(Self, At);
 end;
