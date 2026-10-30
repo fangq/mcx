@@ -26,9 +26,18 @@ uses
   SynEdit, SynEditTypes, SynGutterLineNumber, mcxjsonsyn,
   mcxdpi, mcxicons, mcxtheme, mcxdoc, mcxhelp, mcxabout, mcxrun, mcxgl, mcxview, mcxshapes,
   mcxdisp, mcxchoose, mcxtable, mcxjd, mcxmcxp, mcxdomain, mcxdatadlg, CheckLst,
-  FileUtil, LazFileUtils;
+  FileUtil, LazFileUtils, ToolWin;
 
 type
+  { The dock's splitters in the theme's colours.  The stock one paints a
+    rebar band, which the visual styles on Windows draw light grey whatever
+    the window around it is, so a dark theme had a pale bar between every
+    pair of panes. }
+  TMcxDockSplitter = class(TAnchorDockSplitter)
+  protected
+    procedure Paint; override;
+  end;
+
   { One navigator entry below a section header: the group box on the detail
     page it points at, and the button that points there.  Built from the
     Sections table rather than placed, so the two cannot drift apart. }
@@ -476,6 +485,7 @@ type
       messages do not write over it. }
     FJsonFault: Boolean;
     FDisplay: TMcxDisplayBar;
+    FStatus: TPaintBox;
     { The three picture choosers on the first card.  Which simulator runs is
       worked out from them rather than asked as a fourth question. }
     FProcessor, FDomainKind, FMedium: TMcxChooser;
@@ -525,8 +535,9 @@ type
     procedure ResetSettings(Sender: TObject);
     procedure ApplyTheme;
     procedure ApplyNativeChrome;
-    procedure StatusDrawPanel(StatusBar: TStatusBar; Panel: TStatusPanel;
-      const Rect: TRect);
+    procedure StatusPaint(Sender: TObject);
+    { A status panel's text, in whichever bar is showing. }
+    procedure SetStatus(AIndex: Integer; const AText: string);
     procedure BuildThemeMenu;
     procedure ThemeClick(Sender: TObject);
     procedure FocusChanged(Sender: TObject; LastControl: TControl);
@@ -1693,7 +1704,9 @@ procedure TfmMain.ApplyTheme;
         entirely, and a drop-down list's closed face -- so there is no way to
         give either half a palette.  clDefault hands the pairing back to the
         only thing that knows both halves of it. }
-      SetInk(AControl, clDefault);
+      SetInk(AControl, clDefault)
+    else if AControl is TAnchorDockSplitter then
+      AControl.Invalidate;
     if AControl is TWinControl then
       for k := 0 to TWinControl(AControl).ControlCount - 1 do
         Ink(TWinControl(AControl).Controls[k]);
@@ -1744,6 +1757,10 @@ begin
     harmless and the strip stays the desktop's. }
   tbMain.ParentColor := False;
   tbMain.Color := McxBlend(McxBase, McxText, 6);
+  { The etched line under the bar is the desktop's two greys, one of them
+    white: under a theme of our own the change of shade is the edge. }
+  if McxCurrentTheme = mtSystem then tbMain.EdgeBorders := [ebBottom]
+  else tbMain.EdgeBorders := [];
   sbMain.ParentColor := False;
   sbMain.Color := McxBlend(McxBase, McxText, 6);
   TColourAccess(pcView).ParentColor := False;
@@ -1769,14 +1786,25 @@ begin
     sbDetail.Invalidate;
   end;
 
-  { The status bar draws its own text, in the theme's ink: a face that
-    follows Color on Windows (see ApplyNativeChrome) would otherwise carry
-    the desktop's black writing. }
-  sbMain.OnDrawPanel := @StatusDrawPanel;
-  for i := 0 to sbMain.Panels.Count - 1 do
-    if McxCurrentTheme = mtSystem then sbMain.Panels[i].Style := psText
-    else sbMain.Panels[i].Style := psOwnerDraw;
-  sbMain.Invalidate;
+  { Under a theme of our own the status bar is a strip we paint, with the
+    native one hidden and kept only for its panels' texts and widths.  On
+    Windows the native bar's face, the frame round each panel and the gaps
+    between them are the desktop's greys and white, whatever its Color says
+    -- custom-drawn panels only reach the inside of each frame. }
+  if FStatus = nil then
+  begin
+    FStatus := TPaintBox.Create(Self);
+    FStatus.Parent := Self;
+    { Below everything else along the bottom: alBottom siblings are stacked
+      by the Top they have when they are aligned. }
+    FStatus.Top := ClientHeight + 1000;
+    FStatus.Align := alBottom;
+    FStatus.Height := sbMain.Height;
+    FStatus.OnPaint := @StatusPaint;
+  end;
+  FStatus.Visible := McxCurrentTheme <> mtSystem;
+  sbMain.Visible := McxCurrentTheme = mtSystem;
+  FStatus.Invalidate;
 
   { Every form, not just this one.  AnchorDocking puts each pane in a form of
     its own and re-parents our panels into it, so half the window -- the pane
@@ -1856,24 +1884,47 @@ begin
   McxNativeScrollBars(mmLog, Dark);
   McxNativeScrollBars(mmCommand, Dark);
   McxNativeScrollBars(FJson, Dark);
-  McxPlainNative(sbMain, Custom);
   for i := 0 to Screen.FormCount - 1 do
     McxNativeTitleBar(Screen.Forms[i], Dark);
 end;
 
-procedure TfmMain.StatusDrawPanel(StatusBar: TStatusBar; Panel: TStatusPanel;
-  const Rect: TRect);
+{ The painted status bar: sbMain's panels at sbMain's widths, the last one
+  taking the rest, with a hairline between them rather than a frame round
+  each. }
+procedure TfmMain.StatusPaint(Sender: TObject);
 var
   C: TCanvas;
+  i, x, w, y: Integer;
 begin
-  C := StatusBar.Canvas;
-  C.Brush.Color := StatusBar.Color;
-  C.FillRect(Rect);
-  C.Font.Assign(StatusBar.Font);
+  C := FStatus.Canvas;
+  C.Brush.Color := McxBlend(McxBase, McxText, 6);
+  C.FillRect(0, 0, FStatus.Width, FStatus.Height);
+  C.Font.Assign(sbMain.Font);
   C.Font.Color := McxText;
-  C.Brush.Style := bsClear;
-  C.TextOut(Rect.Left + McxScale96(4),
-    Rect.Top + (Rect.Bottom - Rect.Top - C.TextHeight('Ay')) div 2, Panel.Text);
+  y := (FStatus.Height - C.TextHeight('Ay')) div 2;
+  x := 0;
+  for i := 0 to sbMain.Panels.Count - 1 do
+  begin
+    w := sbMain.Panels[i].Width;
+    if i = sbMain.Panels.Count - 1 then w := FStatus.Width - x;
+    C.Brush.Style := bsClear;
+    C.ClipRect := Rect(x, 0, x + w - McxScale96(4), FStatus.Height);
+    C.Clipping := True;
+    C.TextOut(x + McxScale96(6), y, sbMain.Panels[i].Text);
+    C.Clipping := False;
+    Inc(x, w);
+    if i < sbMain.Panels.Count - 1 then
+    begin
+      C.Pen.Color := McxBlend(McxBase, McxText, 22);
+      C.Line(x - 1, McxScale96(4), x - 1, FStatus.Height - McxScale96(4));
+    end;
+  end;
+end;
+
+procedure TfmMain.SetStatus(AIndex: Integer; const AText: string);
+begin
+  sbMain.Panels[AIndex].Text := AText;
+  if (FStatus <> nil) and FStatus.Visible then FStatus.Invalidate;
 end;
 
 { Every setting back to what a blank simulation opens with.
@@ -1959,6 +2010,12 @@ var
   B: TMcxFlatButton;
 begin
   pcView.ShowTabs := False;
+  {$IFDEF WINDOWS}
+  { With the tabs off the Windows notebook still draws its body: a light
+    frame and a white margin round the page.  The button style has no body,
+    and with no tabs it has no buttons either, so the page is all there is. }
+  pcView.Style := tsFlatButtons;
+  {$ENDIF}
 
   FTabBar := TPanel.Create(pnPreview);
   FTabBar.Parent := pnPreview;
@@ -4216,7 +4273,7 @@ end;
 
 procedure TfmMain.RunProgress(Sender: TObject; APercent: Integer);
 begin
-  sbMain.Panels[0].Text := Format('Running  %d%%', [APercent]);
+  SetStatus(0, Format('Running  %d%%', [APercent]));
 end;
 
 { A line in the log saying how many photons each detector caught.
@@ -4429,7 +4486,7 @@ begin
   FRunner.OnDone := @RunDone;
 
   UpdateRunActions;
-  sbMain.Panels[0].Text := 'Running';
+  SetStatus(0, 'Running');
   FRunner.Start;
 end;
 
@@ -4657,16 +4714,30 @@ begin
   AControl.Align := alClient;
 end;
 
+procedure TMcxDockSplitter.Paint;
+begin
+  if (McxCurrentTheme = mtSystem) or not Enabled then
+    inherited Paint
+  else
+  begin
+    Canvas.Brush.Color := McxBlend(McxBase, McxText, 6);
+    Canvas.FillRect(ClientRect);
+  end;
+end;
+
 procedure TfmMain.BuildDock;
 begin
   { AnchorDocking brings its own splitters, so the designer's two go. }
   FreeAndNil(spNav);
   FreeAndNil(spPreview);
+  DockMaster.SplitterClass := TMcxDockSplitter;
 
   FDockSite := TAnchorDockPanel.Create(Self);
   FDockSite.Name := 'McxDockSite';
   FDockSite.Parent := pnMain;
   FDockSite.Align := alClient;
+  { A TPanel, raised by default: a light edge drawn round all the panes. }
+  FDockSite.BevelOuter := bvNone;
 
   { The settings are a page of the notebook rather than a pane of their own.
     Two columns instead of three: the navigator says what you are editing and
@@ -5076,8 +5147,8 @@ end;
   the same thing. }
 procedure TfmMain.ViewPick(Sender: TObject; const AInfo: TMcxPickInfo);
 begin
-  sbMain.Panels[0].Text := Format('Shapes[%d] %s, tag %d',
-    [AInfo.Index, AInfo.Verb, AInfo.Tag]);
+  SetStatus(0, Format('Shapes[%d] %s, tag %d',
+    [AInfo.Index, AInfo.Verb, AInfo.Tag]));
   if FShapes <> nil then FShapes.SelectIndex(AInfo.Index);
 end;
 
@@ -6152,21 +6223,21 @@ end;
 procedure TfmMain.UpdateStatus;
 begin
   if FDoc.Modified then
-    sbMain.Panels[0].Text := 'Modified'
+    SetStatus(0, 'Modified')
   else
-    sbMain.Panels[0].Text := 'Ready';
+    SetStatus(0, 'Ready');
   if FWizard then
-    sbMain.Panels[1].Text := 'Wizard'
+    SetStatus(1, 'Wizard')
   else
-    sbMain.Panels[1].Text := 'Expert';
+    SetStatus(1, 'Expert');
   { A mesh has no Dim, and "0 x 0 x 0" reads as a broken file rather than as
     a different kind of domain. }
   if FRun.AsStr('@run.domainkind', 'shapes') = 'mesh' then
-    sbMain.Panels[2].Text := 'mesh ' + FDoc.AsStr('Mesh.MeshID', '(embedded)')
+    SetStatus(2, 'mesh ' + FDoc.AsStr('Mesh.MeshID', '(embedded)'))
   else
-    sbMain.Panels[2].Text := Format('%d x %d x %d',
+    SetStatus(2, Format('%d x %d x %d',
       [FDoc.AsInt('Domain.Dim[0]'), FDoc.AsInt('Domain.Dim[1]'),
-       FDoc.AsInt('Domain.Dim[2]')]);
+       FDoc.AsInt('Domain.Dim[2]')]));
 end;
 
 end.

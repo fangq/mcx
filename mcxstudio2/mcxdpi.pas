@@ -77,13 +77,10 @@ procedure McxApplyChromeColours(ABase, AText, AAccent, AField,
   the scroll bars of a memo or a scroll box, and the title bar of a form.
 
   McxNativeScrollBars gives AControl's scroll bars Explorer's dark style, or
-  its usual one; McxPlainNative takes the visual style off AControl
-  altogether, which is what lets a status bar's face follow its Color, and
-  puts it back; McxNativeTitleBar asks the window manager for a dark caption.
+  its usual one; McxNativeTitleBar asks the window manager for a dark caption.
   Each does nothing before AControl has a window, and nothing anywhere but on
   Windows -- gtk2 takes all of this from the resource style instead. }
 procedure McxNativeScrollBars(AControl: TWinControl; ADark: Boolean);
-procedure McxPlainNative(AControl: TWinControl; APlain: Boolean);
 procedure McxNativeTitleBar(AForm: TCustomForm; ADark: Boolean);
 
 { Scale every form from the moment it is first shown, for the rest of the
@@ -536,7 +533,6 @@ const
   { Typed, so each is a real string in memory: an empty literal handed to a
     PWideChar parameter is allowed to arrive as nil, and nil means something
     else to SetWindowTheme. }
-  WEmpty: array[0..0] of WideChar = (#0);
   WDarkExplorer: array[0..17] of WideChar = 'DarkMode_Explorer'#0;
   WExplorer: array[0..8] of WideChar = 'Explorer'#0;
 
@@ -572,20 +568,6 @@ begin
     light ones. }
   if ADark then GSetWindowTheme(AControl.Handle, @WDarkExplorer[0], nil)
   else GSetWindowTheme(AControl.Handle, @WExplorer[0], nil);
-{$ENDIF}
-end;
-
-procedure McxPlainNative(AControl: TWinControl; APlain: Boolean);
-begin
-{$IFDEF WINDOWS}
-  if (AControl = nil) or not AControl.HandleAllocated then Exit;
-  LoadNative;
-  if not Assigned(GSetWindowTheme) then Exit;
-  { Empty names match no style, so the control is drawn classic; nil for
-    both is the documented way back to the default. }
-  if APlain then GSetWindowTheme(AControl.Handle, @WEmpty[0], @WEmpty[0])
-  else GSetWindowTheme(AControl.Handle, nil, nil);
-  AControl.Invalidate;
 {$ENDIF}
 end;
 
