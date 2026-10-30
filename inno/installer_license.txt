@@ -1,0 +1,86 @@
+=============================================================
+       MCX Studio and the MCX Suite - version 2026
+=============================================================
+
+Copyright (c) 2009-2026  Qianqian Fang <q.fang at neu.edu>
+Computational Optics & Translational Imaging (COTI) Lab
+Northeastern University, Boston, MA, USA
+Website: https://mcx.space    Source: https://github.com/fangq/mcx
+
+-------------------------------------------------------------
+What you are about to install
+-------------------------------------------------------------
+
+MCX Studio, a graphical program for setting up, running and
+viewing Monte Carlo light-transport simulations, together with
+the simulators it drives:
+
+  MCX     voxel-based, on NVIDIA GPUs (CUDA)
+  MCX-CL  voxel-based, on any OpenCL device: NVIDIA, AMD and
+          Intel GPUs, and CPUs
+  MMC     mesh-based (tetrahedral), on CPUs and GPUs
+  vkmmc   mesh-based, using the ray-tracing hardware of recent
+          GPUs through Vulkan
+  uMCX    a compact, portable MCX for CPUs
+
+and, if you choose, their MATLAB/Octave toolboxes (mcxlab,
+mcxlabcl, mmclab, iso2mesh, redbird, zmat) and Python helpers.
+
+-------------------------------------------------------------
+License
+-------------------------------------------------------------
+
+This is free, open-source software, distributed under the GNU
+General Public License, version 3 or (at your option) any later
+version: https://www.gnu.org/licenses/gpl-3.0.en.html
+
+In short, you may use it for any purpose, including commercial
+work; study and change it; and share it, changed or not, as long
+as what you share stays under the same license and comes with its
+source code. It comes with NO WARRANTY, to the extent permitted
+by law.
+
+The bundled toolboxes and libraries are separate projects with
+licenses of their own; each one's license file is in its folder.
+
+To continue installation, you must agree with the above license.
+
+-------------------------------------------------------------
+Citing this software
+-------------------------------------------------------------
+
+The MCX project is funded by the US National Institutes of Health
+(NIH/NIGMS) under grant R01-GM114365. If MCX Studio or the
+simulators help your research, please cite the papers describing
+the tools you used. The main ones are:
+
+MCX     Q. Fang, D. A. Boas, "Monte Carlo simulation of photon
+        migration in 3D turbid media accelerated by graphics
+        processing units," Opt. Express 17(22), 20178 (2009).
+        https://doi.org/10.1364/OE.17.020178
+
+MCX-CL  L. Yu, F. Nina-Paravecino, D. Kaeli, Q. Fang, "Scalable
+        and massively parallel Monte Carlo photon transport
+        simulations for heterogeneous computing platforms,"
+        J. Biomed. Opt. 23(1), 010504 (2018).
+        https://doi.org/10.1117/1.JBO.23.1.010504
+
+MMC     Q. Fang, "Mesh-based Monte Carlo method using fast
+        ray-tracing in Plucker coordinates," Biomed. Opt.
+        Express 1(1), 165-175 (2010).
+        https://doi.org/10.1364/BOE.1.000165
+
+        Q. Fang, S. Yan, "Graphics processing unit-accelerated
+        mesh-based Monte Carlo photon transport simulations,"
+        J. Biomed. Opt. 24(11), 115002 (2019).
+        https://doi.org/10.1117/1.JBO.24.11.115002
+
+vkmmc / S. Yan, D. Dwyer, D. R. Kaeli, Q. Fang, "Accelerating
+RT-MMC  mesh-based Monte Carlo simulations using contemporary
+        graphics ray-tracing hardware," J. Biomed. Opt. 31(3),
+        035002 (2026). https://doi.org/10.1117/1.JBO.31.3.035002
+
+The complete list -- polarization, split-voxel (SVMC), implicit
+and wide-field MMC, photon replay and Jacobians, denoising, and
+applications -- is in MCXSuite\mcx\NOTICE.txt once installed, and
+at https://mcx.space.

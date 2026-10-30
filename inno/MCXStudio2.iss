@@ -30,8 +30,10 @@ AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 DefaultDirName={autoappdata}\{#MyAppDir}
 DisableProgramGroupPage=no
-LicenseFile=..\MCXSuite\mcx\NOTICE.txt
-InfoAfterFile=..\README.txt
+; written for the installer: what is being installed and its license, and
+; a getting-started page; the full citation list stays in mcx's NOTICE.txt
+LicenseFile=installer_license.txt
+InfoAfterFile=installer_readme.txt
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 OutputBaseFilename="{#MyAppDir}-{#MyAppVersion}"
@@ -84,6 +86,7 @@ Source: "..\MCXSuite\mcx\bin\mcxviewer.exe"; DestDir: "{app}"; Flags: ignorevers
 Source: "..\plink.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\pscp.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\README.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "installer_readme.txt"; DestDir: "{app}"; DestName: "GETTING_STARTED.txt"; Flags: ignoreversion
 Source: "..\MCXSuite\*"; DestDir: "{app}\MCXSuite"; Excludes: "AUTO_BUILD_*.log,mcxshow.*,mcxviewer.*,mcx\utils\*,mmc\matlab\*"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\MATLAB\*"; DestDir: "{code:GetMatlabToolboxLocalPath}\mcx"; Excludes: "AUTO_BUILD_*.log"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\MCXSuite\mcx\utils\*"; DestDir: "{code:GetMatlabToolboxLocalPath}\mcx\mcxtools"; Excludes: "AUTO_BUILD_*.log"; Flags: ignoreversion recursesubdirs createallsubdirs

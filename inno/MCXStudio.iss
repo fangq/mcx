@@ -33,8 +33,10 @@ AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 DefaultDirName={autoappdata}\{#MyAppDir}
 DisableProgramGroupPage=no
-LicenseFile=..\MCXSuite\mcx\NOTICE.txt
-InfoAfterFile=..\README.txt
+; written for the installer: what is being installed and its license, and
+; a getting-started page; the full citation list stays in mcx's NOTICE.txt
+LicenseFile=installer_license.txt
+InfoAfterFile=installer_readme.txt
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 OutputBaseFilename="{#MyAppDir}-{#MyAppVersion}"
@@ -86,6 +88,7 @@ Name: "{app}\MCXSuite"
 ; plink/pscp remote-run helpers of the first Studio are no longer shipped
 Source: "..\mcxstudio.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\README.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "installer_readme.txt"; DestDir: "{app}"; DestName: "GETTING_STARTED.txt"; Flags: ignoreversion
 ; the photon launcher and redbirdpy of the portable packages made by mcx2026.sh
 Source: "..\photon"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
 Source: "..\Python\*"; DestDir: "{app}\Python"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
