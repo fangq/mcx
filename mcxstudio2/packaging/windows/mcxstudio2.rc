@@ -1,4 +1,5 @@
 1 24 "mcxstudio2.manifest"
+MAINICON ICON "mcxstudio2.ico"
 MCXICONPNG 10 "../../icons/mcxstudio2.png"
 MCXICON_NEW 10 "../../icons/new.png"
 MCXICON_OPEN 10 "../../icons/open.png"

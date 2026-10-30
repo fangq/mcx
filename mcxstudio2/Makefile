@@ -148,6 +148,7 @@ res:
 SVGDIR ?= ../icons/svg
 SVGSIZE ?= 96
 RASTER ?= inkscape
+ICOSIZES ?= 16 24 32 48 64 128 256
 
 icons:
 	@mkdir -p icons
@@ -159,7 +160,14 @@ icons:
 	done
 	@$(RASTER) -w 256 -h 256 -o icons/mcxstudio2.png ../mcxstudio/mcx.svg \
 	    >/dev/null 2>&1 || true
+	@# the exe's own icon (MAINICON), for the Start menu, Explorer and shortcuts
+	@for n in $(ICOSIZES); do \
+	    $(RASTER) -w $$n -h $$n -o icons/ico$$n.png ../mcxstudio/mcx.svg >/dev/null 2>&1; \
+	done; \
+	convert $(foreach n,$(ICOSIZES),icons/ico$(n).png) packaging/windows/$(PROJECT).ico \
+	    || true; rm -f icons/ico*.png
 	@{ echo '1 24 "mcxstudio2.manifest"'; \
+	   echo 'MAINICON ICON "$(PROJECT).ico"'; \
 	   echo 'MCXICONPNG 10 "../../icons/mcxstudio2.png"'; \
 	   sed 's/#.*//' packaging/icons.map | while read -r name svg; do \
 	       [ -n "$$name" ] || continue; \
