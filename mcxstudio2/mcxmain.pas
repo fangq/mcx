@@ -431,6 +431,9 @@ type
     FDockSite: TAnchorDockPanel;
     FPaneNav: TForm;
     FPaneView: TForm;
+    FPaneLog: TForm;
+    { Docked before there was a window to size it in; see ApplyPaneSizes. }
+    FLogUnsized: Boolean;
     { The simulation in flight, or nil.  One at a time: a second run would
       write over the first one's output files. }
     FRunner: TMcxRunner;
@@ -505,6 +508,9 @@ type
     procedure QuitAfterRun(AExitCode: Integer; const AWhy: string);
     procedure CentreOnLaunchScreen;
     procedure GuardCentreHeader;
+    procedure DockLog;
+    function  LogShown: Boolean;
+    procedure ShowLog;
     procedure DockCreateControl(Sender: TObject; aName: string;
       var AControl: TControl; DoDisableAutoSizing: boolean);
     procedure ViewLog(Sender: TObject; const AText: string);
@@ -4327,7 +4333,7 @@ begin
     UpdateTitle;
   end;
 
-  pcView.ActivePage := tsLog;
+  ShowLog;
   mmLog.Clear;
   Log(McxCommandLine(Exe, FDoc.FileName, FDoc, FRun));
   Log('');
@@ -4359,7 +4365,7 @@ var
   i: Integer;
 begin
   RefreshDevices;
-  pcView.ActivePage := tsLog;
+  ShowLog;
   Log(CurrentExe + ' -L');
   if Length(FDevices) = 0 then
     Log('  no devices reported')
@@ -4593,6 +4599,12 @@ begin
 
   FPaneNav := MakePane('PaneSections', 'Sections', sbNav, 340, 640);
   FPaneView := MakePane('PaneMain', 'Views', pnPreview, 900, 640);
+  { The log is a pane of its own rather than a page of the notebook, so the
+    output of a run can be read beside the 3-D view of it.  Under the views
+    to start with; its header drags it anywhere else, or onto the views to
+    be a page of them again. }
+  FPaneLog := MakePane('PaneLog', 'Log', mmLog, 900, 180);
+  FreeAndNil(tsLog);
 
   DockMaster.OnCreateControl := @DockCreateControl;
   DockMaster.MakeDockPanel(FDockSite, admrpChild);
@@ -4614,7 +4626,45 @@ begin
   DockMaster.ManualDock(DockMaster.GetAnchorSite(FPaneNav), FDockSite, alLeft);
   DockMaster.ShowControl(FPaneNav.Name, False);
 
+  DockMaster.MakeDockable(FPaneLog, False, False, True);
+  DockLog;
+
   GuardCentreHeader;
+end;
+
+{ Docks the log under the views, at its starting height once there is a
+  window to measure. }
+procedure TfmMain.DockLog;
+begin
+  DockMaster.ManualDock(DockMaster.GetAnchorSite(FPaneLog), FDockSite,
+    alBottom, DockMaster.GetAnchorSite(FPaneView));
+  DockMaster.ShowControl(FPaneLog.Name, False);
+  if FDockSized then SizePane(FPaneLog, alBottom, McxScale96(180))
+  else FLogUnsized := True;
+end;
+
+{ Whether the log is anywhere to be seen: closed, or left out of a layout,
+  it is in a dock site of its own that is hidden. }
+function TfmMain.LogShown: Boolean;
+var
+  Site: TAnchorDockHostSite;
+begin
+  Site := DockMaster.GetAnchorSite(FPaneLog);
+  Result := (Site <> nil) and Site.Visible and FPaneLog.Visible;
+end;
+
+{ Brings the log to the front, wherever it has been put -- floating, or a
+  page beside the views -- and back under the views if it was closed. }
+procedure TfmMain.ShowLog;
+begin
+  if FPaneLog = nil then Exit;
+  if not LogShown then
+  begin
+    DockMaster.MakeDockable(FPaneLog, False, False, True);
+    DockLog;
+  end
+  else
+    DockMaster.ShowControl(FPaneLog.Name, True);
 end;
 
 { The default sizes cannot be applied in FormCreate.
@@ -4662,6 +4712,12 @@ begin
     resizes it on the way up, and a centre worked out from the designed size
     centres the wrong rectangle. }
   CentreOnLaunchScreen;
+  { The panes first: a result or a snapshot wants the 3-D view at the size it
+    will have, not at the sliver the log leaves it before it is sized. }
+  if not FDockRestored then SizePane(FPaneNav, alLeft, McxScale96(340));
+  if FLogUnsized then SizePane(FPaneLog, alBottom, McxScale96(180));
+  FLogUnsized := False;
+  GuardCentreHeader;
 
   if FPendingResult <> '' then
   begin
@@ -4690,9 +4746,6 @@ begin
     FSnapshot := '';
     Application.Terminate;
   end;
-  if FDockRestored then Exit;
-  SizePane(FPaneNav, alLeft, McxScale96(340));
-  GuardCentreHeader;
 end;
 
 procedure TfmMain.ShowResultLater(const AFileName: string);
@@ -4785,7 +4838,8 @@ procedure TfmMain.DockCreateControl(Sender: TObject; aName: string;
 begin
   AControl := nil;
   if SameText(aName, 'PaneSections') then AControl := FPaneNav
-  else if SameText(aName, 'PaneMain') then AControl := FPaneView;
+  else if SameText(aName, 'PaneMain') then AControl := FPaneView
+  else if SameText(aName, 'PaneLog') then AControl := FPaneLog;
   if (AControl <> nil) and DoDisableAutoSizing then
     TWinControl(AControl).DisableAutoSizing;
 end;
@@ -4838,6 +4892,13 @@ begin
     Result := False;
   end;
   FDockRestored := Result;
+  { A layout saved before the log was a pane of its own leaves it out, and
+    puts it away hidden. }
+  if Result and not LogShown then
+  begin
+    DockMaster.MakeDockable(FPaneLog, False, False, True);
+    DockLog;
+  end;
   GuardCentreHeader;
 end;
 
@@ -4955,7 +5016,7 @@ begin
   if CurrentExe = '' then
   begin
     Log('No ' + McxExeName(CurrentBackend) + ' found, so no benchmarks.');
-    pcView.ActivePage := tsLog;
+    ShowLog;
     Exit;
   end;
 
@@ -4964,7 +5025,7 @@ begin
     if not McxBenchmarks(CurrentExe, Names) then
     begin
       Log(CurrentExe + ' -Q: no benchmarks reported.');
-      pcView.ActivePage := tsLog;
+      ShowLog;
       Exit;
     end;
     pmBench.Items.Clear;
@@ -4995,13 +5056,13 @@ begin
   if not McxBenchmarkJSON(CurrentExe, Bench, JSON) then
   begin
     Log('could not read the benchmark ' + Bench);
-    pcView.ActivePage := tsLog;
+    ShowLog;
     Exit;
   end;
   if not FDoc.LoadFromString(JSON) then
   begin
     Log(Bench + ': ' + FDoc.LastError);
-    pcView.ActivePage := tsLog;
+    ShowLog;
     Exit;
   end;
 
@@ -5036,6 +5097,8 @@ begin
     alClient);
   DockMaster.ManualDock(DockMaster.GetAnchorSite(FPaneNav), FDockSite, alLeft);
   DockMaster.ShowControl(FPaneNav.Name, False);
+  DockMaster.MakeDockable(FPaneLog, False, False, True);
+  DockLog;
   ApplyPaneSizes(0);
 end;
 
