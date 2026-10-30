@@ -524,6 +524,9 @@ type
     procedure ShowHelpForFocus;
     procedure ResetSettings(Sender: TObject);
     procedure ApplyTheme;
+    procedure ApplyNativeChrome;
+    procedure StatusDrawPanel(StatusBar: TStatusBar; Panel: TStatusPanel;
+      const Rect: TRect);
     procedure BuildThemeMenu;
     procedure ThemeClick(Sender: TObject);
     procedure FocusChanged(Sender: TObject; LastControl: TControl);
@@ -1755,7 +1758,25 @@ begin
   begin
     sbDetail.ParentColor := False;
     sbDetail.Color := McxBase;
+    { Opaque under a theme of our own.  On Windows a control on a notebook
+      page is drawn with the page's themed body behind it -- white -- unless
+      it says it paints all of itself, and a scroll box never does: the cards
+      covered that, and the page showed through wherever they ended. }
+    if McxCurrentTheme = mtSystem then
+      sbDetail.ControlStyle := sbDetail.ControlStyle - [csOpaque]
+    else
+      sbDetail.ControlStyle := sbDetail.ControlStyle + [csOpaque];
+    sbDetail.Invalidate;
   end;
+
+  { The status bar draws its own text, in the theme's ink: a face that
+    follows Color on Windows (see ApplyNativeChrome) would otherwise carry
+    the desktop's black writing. }
+  sbMain.OnDrawPanel := @StatusDrawPanel;
+  for i := 0 to sbMain.Panels.Count - 1 do
+    if McxCurrentTheme = mtSystem then sbMain.Panels[i].Style := psText
+    else sbMain.Panels[i].Style := psOwnerDraw;
+  sbMain.Invalidate;
 
   { Every form, not just this one.  AnchorDocking puts each pane in a form of
     its own and re-parents our panels into it, so half the window -- the pane
@@ -1810,9 +1831,49 @@ begin
 
   { The drawn glyphs carry the theme's ink, so they are rebuilt with it. }
   BuildIcons;
+  ApplyNativeChrome;
 
   UpdateNavState;
   Invalidate;
+end;
+
+{ What the widget set draws itself on Windows -- scroll bars, the status
+  bar's face, the title bar -- told about the theme.  Separate from
+  ApplyTheme because it needs the windows to exist, and at the first
+  ApplyTheme, in FormCreate, they do not: it runs again once the form is
+  shown. }
+procedure TfmMain.ApplyNativeChrome;
+var
+  Custom, Dark: Boolean;
+  r, g, b: Byte;
+  i: Integer;
+begin
+  Custom := McxCurrentTheme <> mtSystem;
+  RedGreenBlue(ColorToRGB(McxBase), r, g, b);
+  Dark := Custom and (r * 299 + g * 587 + b * 114 < 128000);
+  McxNativeScrollBars(sbDetail, Dark);
+  McxNativeScrollBars(sbNav, Dark);
+  McxNativeScrollBars(mmLog, Dark);
+  McxNativeScrollBars(mmCommand, Dark);
+  McxNativeScrollBars(FJson, Dark);
+  McxPlainNative(sbMain, Custom);
+  for i := 0 to Screen.FormCount - 1 do
+    McxNativeTitleBar(Screen.Forms[i], Dark);
+end;
+
+procedure TfmMain.StatusDrawPanel(StatusBar: TStatusBar; Panel: TStatusPanel;
+  const Rect: TRect);
+var
+  C: TCanvas;
+begin
+  C := StatusBar.Canvas;
+  C.Brush.Color := StatusBar.Color;
+  C.FillRect(Rect);
+  C.Font.Assign(StatusBar.Font);
+  C.Font.Color := McxText;
+  C.Brush.Style := bsClear;
+  C.TextOut(Rect.Left + McxScale96(4),
+    Rect.Top + (Rect.Bottom - Rect.Top - C.TextHeight('Ay')) div 2, Panel.Text);
 end;
 
 { Every setting back to what a blank simulation opens with.
@@ -4757,6 +4818,7 @@ procedure TfmMain.FormShow(Sender: TObject);
 begin
   if FDockSized then Exit;
   FDockSized := True;
+  ApplyNativeChrome;
   { After this message, not during it: the form is shown but its children are
     still settling while OnShow runs. }
   Application.QueueAsyncCall(@ApplyPaneSizes, 0);
