@@ -497,7 +497,11 @@ begin
   Result := False;
   if FSoft then Exit;
   { No handle yet is not no OpenGL: the control has not been shown, and the
-    GL path has always waited for its first paint rather than given up. }
+    GL path has always waited for its first paint rather than given up.  One
+    that is showing but has no window yet -- its page was only just brought
+    up, which on Windows creates the window later -- is given it now. }
+  if (FGL <> nil) and not FGL.HandleAllocated and FGL.IsVisible then
+    FGL.HandleNeeded;
   if (FGL = nil) or not FGL.HandleAllocated then Exit;
   try
     if not FGL.MakeCurrent then

@@ -4851,6 +4851,7 @@ var
   A: TMcxArray;
   i: Integer;
   Shape: string;
+  Prev: TTabSheet;
 begin
   { A trajectory file is a different thing from a fluence map -- paths rather
     than a volume -- and it is told apart by its name, which is how mcx
@@ -4885,14 +4886,23 @@ begin
   Log(Format('%s: %s %s, %d values', [ExtractFileName(AFileName),
     Shape, McxArrayKindName(A.Kind), McxArrayCount(A)]));
 
+  { The 3-D page is brought up before the volume is handed to it, not after.
+    On Windows a control on a page that has never been shown has no window
+    yet, so no OpenGL context either, and the view turns the volume away: a
+    run shows the log page while it runs, and its result was refused unless
+    the 3-D page had been opened earlier in the session. }
+  Prev := pcView.ActivePage;
+  pcView.ActivePage := tsPreview;
   if FView.ShowVolume(A) then
   begin
     FDisplay.ResetSlab;
     FDisplay.SetHasVolume(True);
-    pcView.ActivePage := tsPreview;
   end
   else
+  begin
+    pcView.ActivePage := Prev;
     Log('  the 3-D view would not take it');
+  end;
 end;
 
 { mcx carries a set of standard simulations and will print any of them as
