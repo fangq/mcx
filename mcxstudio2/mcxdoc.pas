@@ -33,7 +33,7 @@ type
     lowest mode it appears in rather than a set. }
   TMcxLevel = (mlWizard, mlExpert);
 
-  TMcxBackend  = (mbMCX, mbMCXCL, mbMMC, mbHIP, mbVKMMC);
+  TMcxBackend  = (mbMCX, mbMCXCL, mbMMC, mbHIP, mbVKMMC, mbUMCX);
   TMcxBackends = set of TMcxBackend;
 
   TMcxDomain   = (mdVoxel, mdShapes, mdMesh);
@@ -186,6 +186,20 @@ const
     's=Branch-less Badouel  (SSE),' +
     'g=Dual-grid DMMC  (output on a voxel grid)';
 
+  { Which simulator runs.  Automatic is the one the three tiles of the
+    Simulator section lead to; the others run that program whatever the tiles
+    say, as far as it can run the domain at all (McxForcedPlan). }
+  ChoiceSimulator =
+    'auto=Automatic  (recommended),' +
+    'mcx=MCX  (CUDA),' +
+    'mcxcl=MCX-CL  (OpenCL),' +
+    'mmc-cuda=MMC on CUDA,' +
+    'mmc-opencl=MMC on OpenCL,' +
+    'mmc-sse=MMC on the CPU,' +
+    'mmc-optix=MMC with OptiX ray tracing,' +
+    'vkmmc=VKMMC  (Vulkan),' +
+    'umcx=uMCX  (CPU)';
+
   { A number in the file, not a letter: written back with SetInt. }
   ChoiceBasisOrder =
     '1=Mesh nodes  (linear),' +
@@ -213,7 +227,7 @@ const
     A path beginning @run is not part of the simulation at all -- it is a
     runtime choice such as which device to use -- and is routed to a second
     document that is saved with the preferences rather than with the file. }
-  Binds: array[0..46] of TMcxBind = (
+  Binds: array[0..48] of TMcxBind = (
     { -- Types ------------------------------------------------------------- }
     (Ctl:'cbMediaFormat';Path:'Domain.MediaFormat';Kind:mkChoice; Level:mlExpert;
      Backends:[]; Domains:[mdVoxel]; Min:0; Max:0; Choices:ChoiceMediaFormat; EnableIf:''),
@@ -305,6 +319,12 @@ const
      EnableIf:'Optode.Detector[0].Pos?'),
 
     { -- Compute ----------------------------------------------------------- }
+    (Ctl:'cbSimulator'; Path:'@run.simulator'; Kind:mkChoice; Level:mlExpert;
+     Backends:[]; Domains:[]; Min:0; Max:0; Choices:ChoiceSimulator; EnableIf:''),
+    { Appended to the command line as typed, after everything the form
+      writes, so an option given twice is the one typed here. }
+    (Ctl:'edExtraArgs'; Path:'@run.extraargs'; Kind:mkText; Level:mlExpert;
+     Backends:[]; Domains:[]; Min:0; Max:0; Choices:''; EnableIf:''),
     (Ctl:'ckAutoThread'; Path:'Session.DoAutoThread'; Kind:mkBool; Level:mlWizard;
      Backends:[mbMCX,mbMCXCL,mbHIP]; Domains:[]; Min:0; Max:0; Choices:''; EnableIf:''),
     (Ctl:'edThread'; Path:'@run.nthread'; Kind:mkInt; Level:mlExpert;
@@ -350,7 +370,7 @@ const
     is untouched, and the file stays as short as it came.  An empty entry is
     a setting with no useful default -- Dim, or mcx's Dt, whose initial
     VERY_BIG means "one gate from T0 to T1". }
-  McxDefaults: array[0..33] of record
+  McxDefaults: array[0..34] of record
     Path, MCX, MCXCL, MMC: string;
   end = (
     (Path:'Forward.T0';              MCX:'0';       MCXCL:'0';       MMC:'0'),
@@ -387,7 +407,8 @@ const
     (Path:'Mesh.InitElem';           MCX:'';        MCXCL:'';        MMC:'0'),
     { Runtime choices, kept with the preferences rather than the file. }
     (Path:'@run.nthread';            MCX:'16384';   MCXCL:'16384';   MMC:'8192'),
-    (Path:'@run.nblock';             MCX:'64';      MCXCL:'64';      MMC:'64')
+    (Path:'@run.nblock';             MCX:'64';      MCXCL:'64';      MMC:'64'),
+    (Path:'@run.simulator';          MCX:'auto';    MCXCL:'auto';    MMC:'auto')
   );
 
 { The default a backend uses for APath, or '' when it has none. }

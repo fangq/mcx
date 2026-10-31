@@ -101,6 +101,14 @@ type
 { The solver for a combination, and why there is none when there is none. }
 function McxPlanFor(const AProcessor, ADomain, AMedia: string): TMcxPlan;
 
+{ The plan for a simulator picked in the Compute section (ChoiceSimulator)
+  rather than worked out from the tiles: that program runs, on the domain the
+  tiles describe, or the plan says why it cannot. }
+function McxForcedPlan(const ASimulator, ADomain, AMedia: string): TMcxPlan;
+
+{ The words of a line of options, split at spaces outside double quotes. }
+procedure McxSplitArgs(const AText: string; AList: TStrings);
+
 { The folder the program is in, with a trailing delimiter -- for a macOS
   application bundle, the folder the bundle is in. }
 function McxProgramDir: string;
@@ -210,7 +218,7 @@ function McxCommandLine(const AExe, AInputFile: string;
 implementation
 
 const
-  ExeNames: array[TMcxBackend] of string = ('mcx', 'mcxcl', 'mmc', 'mcx', 'vkmmc');
+  ExeNames: array[TMcxBackend] of string = ('mcx', 'mcxcl', 'mmc', 'mcx', 'vkmmc', 'umcx');
 
 function McxPlanFor(const AProcessor, ADomain, AMedia: string): TMcxPlan;
 begin
@@ -285,9 +293,112 @@ begin
   if Result.Svmc then Result.Name := Result.Name + ', split-voxel';
 end;
 
+function McxForcedPlan(const ASimulator, ADomain, AMedia: string): TMcxPlan;
+var
+  IsMesh: Boolean;
+begin
+  Result.Backend := mbMCX;
+  Result.Compute := '';
+  Result.Svmc := False;
+  Result.Ok := True;
+  Result.Why := '';
+  IsMesh := (ADomain = 'mesh') or (ADomain = 'surface');
+
+  if Copy(ASimulator, 1, 4) = 'mmc-' then
+  begin
+    Result.Backend := mbMMC;
+    Result.Compute := Copy(ASimulator, 5, MaxInt);
+    if Result.Compute = 'cuda' then Result.Name := 'MMC on CUDA'
+    else if Result.Compute = 'opencl' then Result.Name := 'MMC on OpenCL'
+    else if Result.Compute = 'sse' then Result.Name := 'MMC on the CPU'
+    else Result.Name := 'MMC, OptiX ray tracing';
+    if not IsMesh then
+    begin
+      Result.Ok := False;
+      Result.Why := 'MMC simulates a mesh: pick a tetrahedral or surface ' +
+        'mesh, or another simulator.';
+    end
+    { The surface tile is the triangles alone, and only OptiX traces those;
+      a tetrahedral mesh is walked an element at a time, which OptiX does not. }
+    else if (ADomain = 'surface') <> (Result.Compute = 'optix') then
+    begin
+      Result.Ok := False;
+      if ADomain = 'surface' then
+        Result.Why := 'A surface mesh is traced with OptiX only.'
+      else
+        Result.Why := 'OptiX traces a surface mesh, not a tetrahedral one.';
+    end;
+  end
+  else if ASimulator = 'vkmmc' then
+  begin
+    Result.Backend := mbVKMMC;
+    Result.Name := 'VKMMC on Vulkan';
+    if ADomain <> 'shapes' then
+    begin
+      Result.Ok := False;
+      Result.Why := 'VKMMC traces primitive shapes as surfaces: pick ' +
+        'Primitive shapes, or another simulator.';
+    end;
+  end
+  else
+  begin
+    { The voxel simulators.  MCX and MCX-CL run a low-scattering medium as
+      split-voxel, as the tiles do; uMCX has no split-voxel mode. }
+    if ASimulator = 'mcxcl' then
+    begin
+      Result.Backend := mbMCXCL;
+      Result.Name := 'MCX-CL on OpenCL';
+    end
+    else if ASimulator = 'umcx' then
+    begin
+      Result.Backend := mbUMCX;
+      Result.Name := 'uMCX';
+    end
+    else
+      Result.Name := 'MCX on CUDA';
+    Result.Svmc := (AMedia = 'lowscatter') and (Result.Backend <> mbUMCX);
+    if Result.Svmc then Result.Name := Result.Name + ', split-voxel';
+    if IsMesh then
+    begin
+      Result.Ok := False;
+      Result.Why := Result.Name + ' simulates a voxel grid: pick Voxel grid ' +
+        'or Primitive shapes, or MMC.';
+    end;
+  end;
+end;
+
+procedure McxSplitArgs(const AText: string; AList: TStrings);
+var
+  i: Integer;
+  Word: string;
+  InQuote, HasWord: Boolean;
+begin
+  Word := '';
+  InQuote := False;
+  HasWord := False;
+  for i := 1 to Length(AText) do
+    if AText[i] = '"' then
+    begin
+      InQuote := not InQuote;
+      HasWord := True;
+    end
+    else if (AText[i] in [' ', #9]) and not InQuote then
+    begin
+      if HasWord then AList.Add(Word);
+      Word := '';
+      HasWord := False;
+    end
+    else
+    begin
+      Word := Word + AText[i];
+      HasWord := True;
+    end;
+  if HasWord then AList.Add(Word);
+end;
+
 function McxBackendName(ABackend: TMcxBackend): string;
 const
-  Names: array[TMcxBackend] of string = ('mcx', 'mcxcl', 'mmc', 'mcx-hip', 'vkmmc');
+  Names: array[TMcxBackend] of string = ('mcx', 'mcxcl', 'mmc', 'mcx-hip', 'vkmmc', 'umcx');
 begin
   Result := Names[ABackend];
 end;
@@ -629,7 +740,7 @@ function McxDebugArg(const AFlags: string; ABackend: TMcxBackend): string;
 const
   { mcx: debugflag[] = R M P T, one bit each, in that order.
     mmc: S C B W D I O X A T R P E M -- so its progress bit is 2048. }
-  ProgressBit: array[TMcxBackend] of Integer = (4, 4, 2048, 4, 4);
+  ProgressBit: array[TMcxBackend] of Integer = (4, 4, 2048, 4, 4, 4);
 var
   i, Mask: Integer;
   Numeric: Boolean;
@@ -657,6 +768,7 @@ begin
   else if S = 'mmc' then Result := mbMMC
   else if S = 'mcx-hip' then Result := mbHIP
   else if S = 'vkmmc' then Result := mbVKMMC
+  else if S = 'umcx' then Result := mbUMCX
   else Result := mbMCX;
 end;
 
@@ -673,6 +785,14 @@ begin
   begin
     Result.Add('-s');
     Result.Add(S);
+  end;
+
+  { uMCX reads everything else from the file, and stops at a flag it does
+    not know. }
+  if BackendOf(ARun) = mbUMCX then
+  begin
+    McxSplitArgs(ARun.AsStr('@run.extraargs', ''), Result);
+    Exit;
   end;
 
   { vkmmc numbers its Vulkan devices from 0 and takes one, not mcx's mask,
@@ -737,6 +857,10 @@ begin
     Result.Add('--maxjumpdebug');
     Result.Add(IntToStr(ARun.AsInt('@run.maxjumpdebug')));
   end;
+
+  { Whatever the person typed in the Compute section, last: mcx, mcxcl and
+    mmc take the last of an option given twice, so these win over the form. }
+  McxSplitArgs(ARun.AsStr('@run.extraargs', ''), Result);
 end;
 
 function McxCommandLine(const AExe, AInputFile: string;

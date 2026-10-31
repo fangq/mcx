@@ -173,6 +173,13 @@ type
     gbOutput: TPanel;
     gbSwitches: TPanel;
     gbDetPhoton: TPanel;
+    gbSolver: TPanel;
+    rwSimulator: TPanel;
+    lbSimulator: TLabel;
+    cbSimulator: TComboBox;
+    rwExtraArgs: TPanel;
+    lbExtraArgs: TLabel;
+    edExtraArgs: TEdit;
     gbGPU: TPanel;
     gbDevices: TPanel;
     gbBoundary: TPanel;
@@ -830,7 +837,7 @@ const
     { Shapes    } 'gbShapeList',
     { Optode    } 'gbSource,gbSrcAdv,gbDetector',
     { Session   } 'gbBasic,gbTime,gbOutput,gbSwitches,gbDetPhoton',
-    { Compute   } 'gbGPU,gbDevices',
+    { Compute   } 'gbSolver,gbGPU,gbDevices',
     { Advanced  } 'gbBoundary,gbFlags');
 
 { A minimal document: enough for mcx to run, and the same 60-cube every
@@ -2637,7 +2644,7 @@ end;
 procedure TfmMain.ApplyPlan;
 var
   Plan: TMcxPlan;
-  Exe: string;
+  Exe, Forced: string;
 begin
   if FProcessor = nil then Exit;
 
@@ -2651,7 +2658,13 @@ begin
     FRun.SetStr('@run.domainkind', FDomainKind.Value);
   end;
 
-  Plan := McxPlanFor(FProcessor.Value, FDomainKind.Value, FMedium.Value);
+  { A simulator picked in the Compute section runs whatever the tiles say;
+    the tiles still describe the domain it runs. }
+  Forced := FRun.AsStr('@run.simulator', 'auto');
+  if (Forced = '') or (Forced = 'auto') then
+    Plan := McxPlanFor(FProcessor.Value, FDomainKind.Value, FMedium.Value)
+  else
+    Plan := McxForcedPlan(Forced, FDomainKind.Value, FMedium.Value);
   FRun.SetStr('@run.backend', McxBackendName(Plan.Backend));
   FRun.SetStr('@run.compute', Plan.Compute);
 
@@ -2669,6 +2682,9 @@ begin
       McxExeName(Plan.Backend) + ' was not found beside this program or on PATH.'
   else
     FPlanText.Caption := 'Runs as: ' + Plan.Name;
+  if (Forced <> '') and (Forced <> 'auto') then
+    FPlanText.Caption := FPlanText.Caption +
+      '  (chosen under Compute > Simulator)';
   FPlanText.Font.Color := McxText;
 
   UpdateRunActions;
@@ -3144,7 +3160,7 @@ end;
 function TfmMain.Environment: string;
 const
   BackendNames: array[TMcxBackend] of string =
-    ('mcx', 'mcxcl', 'mmc', 'mcx-hip', 'vkmmc');
+    ('mcx', 'mcxcl', 'mmc', 'mcx-hip', 'vkmmc', 'umcx');
 var
   B: TMcxBackend;
   Exe: string;
@@ -4269,6 +4285,7 @@ begin
   else if S = 'mmc' then Result := mbMMC
   else if S = 'mcx-hip' then Result := mbHIP
   else if S = 'vkmmc' then Result := mbVKMMC
+  else if S = 'umcx' then Result := mbUMCX
   else Result := mbMCX;
 end;
 
@@ -4665,6 +4682,12 @@ begin
   begin
     FDevNote.Caption := 'No ' + FDevFor + ' was found, so there is nothing ' +
       'to ask. Install it, or put it on the PATH.';
+    Exit;
+  end;
+  if CurrentBackend = mbUMCX then
+  begin
+    FDevNote.Caption := 'umcx has no device listing; it runs on the device ' +
+      'it was built for (the processor, unless built with GPU offload).';
     Exit;
   end;
   if (CurrentBackend = mbMMC) and (FRun.AsStr('@run.processor', '') = 'cpu') then
@@ -6214,6 +6237,13 @@ begin
   if FBound[i] <> Sender then Exit;
 
   SaveBinding(i);
+  { Picking a simulator is what a tile press is: another program, with
+    other defaults and other devices. }
+  if Binds[i].Path = '@run.simulator' then
+  begin
+    ChoiceChanged(Sender);
+    Exit;
+  end;
   { A source vector typed above the source table is a cell of it too. }
   if (FSources <> nil) and (Pos('Optode.Source.', Binds[i].Path) = 1) then
     FSources.Reload;

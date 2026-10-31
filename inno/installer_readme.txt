@@ -17,7 +17,10 @@ Your first simulation, in five steps
    or the CPU), how the domain is described (a voxel grid,
    primitive shapes, or a tetrahedral or surface mesh) and the
    kind of medium. MCX Studio picks the simulator that suits that
-   choice and says which one, under "Runs as".
+   choice and says which one, under "Runs as". In Expert mode,
+   Compute > Simulator runs another one instead (MCX-CL on an
+   NVIDIA card, say, or MMC with a given backend), and Extra
+   options adds your own command-line options.
 3. Describe the domain:
      - Shapes: add a grid, spheres, boxes, cylinders, slabs or
        layers. A new shape takes the next free medium label, and

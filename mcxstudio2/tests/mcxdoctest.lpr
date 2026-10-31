@@ -461,6 +461,21 @@ begin
     Ok((Pos('-G', Cmd) = 0) and (Pos('-W', Cmd) = 0) and (Pos('-A 0', Cmd) = 0) and
        (Pos('-t ', Cmd) = 0) and (Pos('-T ', Cmd) = 0),
        'vkmmc is given no device, workload or thread flags');
+
+    { Extra options go last, so they win over what the form wrote; a quoted
+      value stays one word. }
+    R.SetStr('@run.backend', 'mcx');
+    R.SetStr('@run.extraargs', '--bc aaaaaa  -s "my run"');
+    Cmd := McxCommandLine('/opt/mcx/bin/mcx', '/tmp/box.json', D, R);
+    Ok(Copy(Cmd, Length(Cmd) - 22, 23) = '--bc aaaaaa -s "my run"',
+       'extra options are appended as typed');
+
+    { uMCX reads the file and knows no device, thread or debug flag. }
+    R.SetStr('@run.backend', 'umcx');
+    R.SetStr('@run.extraargs', '-n 1e5');
+    Cmd := McxCommandLine('/opt/umcx/bin/umcx', '/tmp/box.json', D, R);
+    Ok(Cmd = 'umcx -f box.json -s box -n 1e5',
+       'umcx is given the input, the session and the extra options only');
   finally
     R.Free;
     D.Free;
@@ -489,6 +504,26 @@ begin
   Ok((P.Backend = mbMCXCL) and P.Svmc, 'but on the processor they stay split-voxel MCX-CL');
   P := McxPlanFor('amd', 'mesh', 'diffusive');
   Ok((P.Backend = mbMMC) and (P.Compute = 'opencl'), 'a mesh on an AMD card is MMC on OpenCL');
+
+  { A simulator picked under Compute runs whatever the tiles say. }
+  P := McxForcedPlan('mcxcl', 'voxel', 'diffusive');
+  Ok(P.Ok and (P.Backend = mbMCXCL), 'MCX-CL can be picked for a grid on any card');
+  P := McxForcedPlan('mcx', 'shapes', 'lowscatter');
+  Ok(P.Ok and (P.Backend = mbMCX) and P.Svmc, 'MCX runs low-scattering shapes split-voxel');
+  P := McxForcedPlan('umcx', 'voxel', 'lowscatter');
+  Ok(P.Ok and (P.Backend = mbUMCX) and not P.Svmc, 'uMCX has no split-voxel mode');
+  P := McxForcedPlan('mmc-sse', 'mesh', 'diffusive');
+  Ok(P.Ok and (P.Backend = mbMMC) and (P.Compute = 'sse'), 'MMC on the CPU for a mesh');
+  P := McxForcedPlan('mmc-cuda', 'voxel', 'diffusive');
+  Ok(not P.Ok and (P.Why <> ''), 'but MMC cannot run a voxel grid');
+  P := McxForcedPlan('mmc-opencl', 'surface', 'diffusive');
+  Ok(not P.Ok, 'and only OptiX traces a surface mesh');
+  P := McxForcedPlan('mmc-optix', 'surface', 'diffusive');
+  Ok(P.Ok and (P.Compute = 'optix'), 'which it does');
+  P := McxForcedPlan('vkmmc', 'voxel', 'lowscatter');
+  Ok(not P.Ok, 'VKMMC needs primitive shapes');
+  P := McxForcedPlan('mcx', 'mesh', 'diffusive');
+  Ok(not P.Ok, 'MCX cannot run a mesh');
 end;
 
 

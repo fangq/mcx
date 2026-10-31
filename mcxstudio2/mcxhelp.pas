@@ -67,7 +67,7 @@ type
   end;
 
 const
-  Helps: array[0..48] of TMcxHelpEntry = (
+  Helps: array[0..50] of TMcxHelpEntry = (
     (Ctl:'rgBackend'; Text:'Which simulator runs. MCX needs an NVIDIA card; ' +
       'MCX-CL runs the same simulation on any OpenCL device, including the ' +
       'CPU; MMC works on a tetrahedral mesh instead of voxels. The choice ' +
@@ -200,6 +200,17 @@ const
     (Ctl:'edWorkload'; Text:'How to split the photons between several ' +
       'devices (-W/--workload), one number each, in proportion. Only ' +
       'meaningful when more than one device is selected.'),
+    (Ctl:'cbSimulator'; Text:'Which program runs the simulation. Automatic ' +
+      'takes the one the Simulator section''s choices lead to -- MCX on an ' +
+      'NVIDIA card. Any other choice runs that program instead, on the same ' +
+      'domain: MCX-CL on an NVIDIA card through OpenCL, MMC with a ' +
+      'particular backend, VKMMC through Vulkan, or uMCX. The Simulator ' +
+      'section says when the program cannot run that domain.'),
+    (Ctl:'edExtraArgs'; Text:'Options added to the end of the command line, ' +
+      'as typed -- for example --bc aaaaaa -H 1e7. They come after ' +
+      'everything this window writes, so an option given here wins. Use ' +
+      'double quotes round a value with spaces. The Command tab shows the ' +
+      'line that will run.'),
 
     (Ctl:'edBC'; Text:'What happens at each of the six faces ' +
       '(-B/--bc): six letters in the order -x +x -y +y -z +z, then six more ' +
