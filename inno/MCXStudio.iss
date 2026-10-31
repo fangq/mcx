@@ -31,14 +31,15 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
-DefaultDirName={autoappdata}\{#MyAppDir}
+DefaultDirName={code:GetDefaultDir}\{#MyAppDir}
 DisableProgramGroupPage=no
 ; written for the installer: what is being installed and its license, and
 ; a getting-started page; the full citation list stays in mcx's NOTICE.txt
 LicenseFile=installer_license.txt
 InfoAfterFile=installer_readme.txt
-; Uncomment the following line to run in non administrative install mode (install for current user only.)
-;PrivilegesRequired=lowest
+; setup asks whether to install for all users (PATH and MATLABPATH/OCTAVE_PATH
+; in the machine environment) or for the current user only (in the user's)
+PrivilegesRequiredOverridesAllowed=dialog
 OutputBaseFilename="{#MyAppDir}-{#MyAppVersion}"
 Compression=lzma
 SolidCompression=yes
@@ -73,7 +74,7 @@ Name: "chinesetraditional"; MessagesFile: "compiler:Languages\ChineseTraditional
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 Name: "envPath"; Description: "Add to PATH variable" 
-Name: "addMATLABPath"; Description: "Add toolbox paths to MATLAB"
+Name: "addMATLABPath"; Description: "Add the toolboxes to the MATLAB and Octave paths (MATLABPATH, OCTAVE_PATH)"
 
 ;;----------------------------------------------------------------------
 
@@ -93,9 +94,11 @@ Source: "installer_readme.txt"; DestDir: "{app}"; DestName: "GETTING_STARTED.txt
 Source: "..\photon"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
 Source: "..\Python\*"; DestDir: "{app}\Python"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
 Source: "..\MCXSuite\*"; DestDir: "{app}\MCXSuite"; Excludes: "AUTO_BUILD_*.log,mcxshow.*,mcxviewer.*,mcx\utils\*,mmc\matlab\*"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\MATLAB\*"; DestDir: "{code:GetMatlabToolboxLocalPath}\mcx"; Excludes: "AUTO_BUILD_*.log"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\MCXSuite\mcx\utils\*"; DestDir: "{code:GetMatlabToolboxLocalPath}\mcx\mcxtools"; Excludes: "AUTO_BUILD_*.log"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\MCXSuite\mmc\matlab\*"; DestDir: "{code:GetMatlabToolboxLocalPath}\mcx\mmctools"; Excludes: "AUTO_BUILD_*.log"; Flags: ignoreversion recursesubdirs createallsubdirs
+; the MATLAB/Octave toolboxes stay under {app}; MATLAB and Octave find them
+; through MATLABPATH and OCTAVE_PATH, so no MATLAB install is written to
+Source: "..\MATLAB\*"; DestDir: "{app}\MATLAB"; Excludes: "AUTO_BUILD_*.log"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\MCXSuite\mcx\utils\*"; DestDir: "{app}\MATLAB\mcxtools"; Excludes: "AUTO_BUILD_*.log"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\MCXSuite\mmc\matlab\*"; DestDir: "{app}\MATLAB\mmctools"; Excludes: "AUTO_BUILD_*.log"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 ;;----------------------------------------------------------------------
@@ -144,7 +147,7 @@ Root: HKCU; Subkey: "Software\COTILab\MCXStudio\Settings"; ValueType: string; Va
 Root: HKCU; Subkey: "Software\COTILab\MCXStudio\Settings"; ValueType: string; ValueName: "UserOrganization"; ValueData: "{userinfoorg}"; Check: not IsAdminInstallMode
 
 ; Fix windows graphics driver watchdog time limit
-Root: HKLM; Subkey: "System\CurrentControlSet\Control\GraphicsDrivers"; ValueType: dword; ValueName: "TdrDelay"; ValueData: 10000000
+Root: HKLM; Subkey: "System\CurrentControlSet\Control\GraphicsDrivers"; ValueType: dword; ValueName: "TdrDelay"; ValueData: 10000000; Check: IsAdminInstallMode
 
 ;;----------------------------------------------------------------------
 
@@ -156,21 +159,25 @@ Filename: "{app}\{#MyAppExeName}"; Parameters: "--user"; Description: "{cm:Launc
 [Code]
 
 const
-  EnvironmentKey = 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment';
+  SystemEnvKey = 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment';
+  UserEnvKey = 'Environment';
+  // the toolbox folders under {app}\MATLAB put on MATLABPATH and OCTAVE_PATH;
+  // each one's PKG_ADD finds its Octave mex files under octave\<arch>
+  ToolboxDirs = 'mcxlab;mcxlabcl;mmclab;iso2mesh;zmat;redbird\matlab;mcxtools;mmctools';
 
 // codes to finding MATLAB's installation path is derived from
-// https://stackoverflow.com/a/46283761/4271392
+// https://stackoverflow.com/a/46283761/4271392; only used to take out the
+// pathdef.m line of the installers before v2026, which copied the toolboxes
+// into <matlabroot>\toolbox\mcx
 var
   MatlabToolboxLocalPath: string;
 
-function GetMatlabToolboxLocalPath(Param: string): string;
+function GetDefaultDir(Param: string): string;
 begin
-  Result := MatlabToolboxLocalPath;
-  if Result = '..\toolbox' then
-  begin
-    Result := ExpandConstant('{app}') + '\MATLAB';
-  end;
-  Log(Format('MCX Toolbox Path found at %s', [Result]));
+  if IsAdminInstallMode then
+    Result := ExpandConstant('{commonappdata}')
+  else
+    Result := ExpandConstant('{localappdata}') + '\Programs';
 end;
 
 // Function to convert installer language to application language code
@@ -200,113 +207,104 @@ var
 begin
   MatlabExePath := FileSearch('matlab.exe', GetEnv('PATH'));
   Log(Format('MATLAB Path found at %s', [MatlabExePath]));
-  MatlabToolboxLocalPath := ExtractFilePath(MatlabExePath) + '..\toolbox';
+  MatlabToolboxLocalPath := '';
+  if MatlabExePath <> '' then
+    MatlabToolboxLocalPath := ExtractFilePath(MatlabExePath) + '..\toolbox';
   Log(Format('MATLAB Toolbox Path found at %s', [MatlabToolboxLocalPath]));
 
   Result := True;
 end;
 
-// codes to modify PATH environment variable is derived from
-// https://stackoverflow.com/a/46609047/4271392
-
-procedure EnvAddPath(Path: string; isprepend: boolean);
-var
-    Paths: string;
+// the environment of an all-users install is the machine's, otherwise the
+// current user's
+function EnvRoot: Integer;
 begin
-    { Retrieve current path (use empty string if entry not exists) }
-    if not RegQueryStringValue(HKEY_LOCAL_MACHINE, EnvironmentKey, 'Path', Paths)
-    then Paths := '';
-
-    { Skip if string already found in path }
-    if Pos(';' + Uppercase(Path) + ';', ';' + Uppercase(Paths) + ';') > 0 then exit;
-
-    { Append or prepend string to the end of the path variable }
-    if(isprepend) then
-        Paths := Path + ';' + Paths + ';'
-    else
-        Paths := Paths + ';' + Path + ';';
-
-    { Overwrite (or create if missing) path environment variable }
-    if RegWriteStringValue(HKEY_LOCAL_MACHINE, EnvironmentKey, 'Path', Paths)
-    then Log(Format('The [%s] added to PATH: [%s]', [Path, Paths]))
-    else Log(Format('Error while adding the [%s] to PATH: [%s]', [Path, Paths]));
+  if IsAdminInstallMode then
+    Result := HKEY_LOCAL_MACHINE
+  else
+    Result := HKEY_CURRENT_USER;
 end;
 
-procedure EnvRemovePath(Path: string);
-var
-    Paths: string;
-    P: Integer;
+function EnvKey: string;
 begin
-    { Skip if registry entry not exists }
-    if not RegQueryStringValue(HKEY_LOCAL_MACHINE, EnvironmentKey, 'Path', Paths) then
-        exit;
-
-    { Skip if string not found in path }
-    P := Pos(';' + Uppercase(Path) + ';', ';' + Uppercase(Paths) + ';');
-    if P = 0 then exit;
-
-    { Update path variable }
-    Delete(Paths, P - 1, Length(Path) + 1);
-
-    { Overwrite path environment variable }
-    if RegWriteStringValue(HKEY_LOCAL_MACHINE, EnvironmentKey, 'Path', Paths)
-    then Log(Format('The [%s] removed from PATH: [%s]', [Path, Paths]))
-    else Log(Format('Error while removing the [%s] from PATH: [%s]', [Path, Paths]));
+  if IsAdminInstallMode then
+    Result := SystemEnvKey
+  else
+    Result := UserEnvKey;
 end;
 
-function AddLineToTemplate(
-  FileName: string; StartLine, EndLine, LinePattern, AddLine: string): Boolean;
+// a ';' list without its empty entries, without the entries in Drop (also a
+// ';' list, case-insensitive), and without MCXSuite folders that no longer
+// exist -- what an install in another folder, or an older installer that
+// left stray ';' behind, leaves in PATH
+function CleanList(List, Drop: string): string;
 var
-  Lines: TArrayOfString;
-  Count, I, I2: Integer;
-  Line: string;
-  State: Integer;
+  Item: string;
+  P: Integer;
 begin
-  Result := True;
+  Result := '';
+  List := List + ';';
+  Drop := ';' + Uppercase(Drop) + ';';
+  while List <> '' do begin
+    P := Pos(';', List);
+    Item := Trim(Copy(List, 1, P - 1));
+    Delete(List, 1, P);
+    if Item = '' then continue;
+    if Pos(';' + Uppercase(Item) + ';', Drop) > 0 then continue;
+    if (Pos('\MCXSUITE\', Uppercase(Item)) > 0) and (Pos('%', Item) = 0)
+       and not DirExists(Item) then continue;
+    if Result <> '' then Result := Result + ';';
+    Result := Result + Item;
+  end;
+end;
 
-  if not LoadStringsFromFile(FileName, Lines) then  begin
-    Log(Format('Error reading %s', [FileName]));
-    Result := False;
-  end  else  begin
-    State := 0;
+// add the ';' list Dirs to the end of the environment variable Name, or with
+// Add=False take them out; a variable left empty is deleted, except PATH.
+// RegWriteStringValue keeps an existing REG_EXPAND_SZ value expandable.
+procedure EnvUpdate(Name, Dirs: string; Add: Boolean);
+var
+  Value, NewValue: string;
+begin
+  if not RegQueryStringValue(EnvRoot, EnvKey, Name, Value) then
+    Value := '';
+  NewValue := CleanList(Value, Dirs);
+  if Add then begin
+    if NewValue <> '' then NewValue := NewValue + ';';
+    NewValue := NewValue + Dirs;
+  end;
+  if NewValue = Value then exit;
+  if (NewValue = '') and (CompareText(Name, 'Path') <> 0) then begin
+    if RegDeleteValue(EnvRoot, EnvKey, Name) then
+      Log(Format('Removed %s', [Name]));
+  end else if RegWriteStringValue(EnvRoot, EnvKey, Name, NewValue) then
+    Log(Format('%s set to [%s]', [Name, NewValue]))
+  else
+    Log(Format('Error while writing %s: [%s]', [Name, NewValue]));
+end;
 
-    Count := GetArrayLength(Lines);
-    for I := 0 to Count - 1 do begin
-      Line := Trim(Lines[I]);
-      if (CompareText(Line, StartLine) = 0) then begin
-        State := 1;
-        Log(Format('Start line found at %d', [I]));
-      end else if (State = 1) and (Pos(LinePattern,Line) > 0) then  begin
-        Log(Format('Line already present at %d', [I]));
-        State := 2;
-        break;
-      end else if (State = 1) and (CompareText(Line, EndLine) = 0) then  begin
-        Log(Format('End line found at %d, inserting', [I]));
-        SetArrayLength(Lines, Count + 1);
-        for I2 := Count - 1 downto I do
-          Lines[I2 + 1] := Lines[I2];
-        Lines[I] := AddLine;
-        State := 2;
+function SuiteBinDirs: string;
+var
+  App: string;
+begin
+  App := ExpandConstant('{app}');
+  Result := App + ';' + App + '\MCXSuite\mcx\bin;' + App + '\MCXSuite\mcxcl\bin;' +
+            App + '\MCXSuite\mmc\bin;' + App + '\MCXSuite\vkmmc\bin;' +
+            App + '\MCXSuite\umcx\bin';
+end;
 
-        if not SaveStringsToFile(FileName, Lines, False) then
-        begin
-          Log(Format('Error writting %s', [FileName]));
-          Result := False;
-        end
-          else
-        begin
-          Log(Format('Modifications saved to %s', [FileName]));
-        end;
-
-        break;
-      end;
-    end;
-
-    if Result and (State <> 2) then
-    begin
-      Log(Format('Spot to insert line was not found in %s', [FileName]));
-      Result := False;
-    end;
+function ToolboxPaths: string;
+var
+  List, Item: string;
+  P: Integer;
+begin
+  Result := '';
+  List := ToolboxDirs + ';';
+  while List <> '' do begin
+    P := Pos(';', List);
+    Item := Copy(List, 1, P - 1);
+    Delete(List, 1, P);
+    if Result <> '' then Result := Result + ';';
+    Result := Result + ExpandConstant('{app}') + '\MATLAB\' + Item;
   end;
 end;
 
@@ -361,47 +359,40 @@ begin
   end;
 end;
 
+// the pathdef.m line of the installers before v2026; the toolbox copies
+// they left in <matlabroot>\toolbox\mcx are then no longer on the path
+procedure RemoveLegacyPathdef;
+var
+  PathDef: string;
+begin
+  if (MatlabToolboxLocalPath = '') or not IsAdminInstallMode then exit;
+  PathDef := MatlabToolboxLocalPath + '\local\pathdef.m';
+  if FileExists(PathDef) then
+    DeleteLineInTemplate(PathDef, '%%% BEGIN ENTRIES %%%', '%%% END ENTRIES %%%',
+                         '%%% MCX PATHS %%%');
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
-    if (CurStep = ssPostInstall) and (IsTaskSelected('envPath')) then begin
-      EnvAddPath(ExpandConstant('{app}'), false);
-      EnvAddPath(ExpandConstant('{app}') +'\MCXSuite\mcx\bin', false);
-      EnvAddPath(ExpandConstant('{app}') +'\MCXSuite\mmc\bin', true);
-      EnvAddPath(ExpandConstant('{app}') +'\MCXSuite\mcxcl\bin',false);
-      EnvAddPath(ExpandConstant('{app}') +'\MCXSuite\vkmmc\bin',false);
-      EnvAddPath(ExpandConstant('{app}') +'\MCXSuite\umcx\bin',false);
-    end;
-    if (CurStep = ssPostInstall) and (IsTaskSelected('addMATLABPath')) then begin
-       AddLineToTemplate(MatlabToolboxLocalPath+'\local\pathdef.m',
-              '%%% BEGIN ENTRIES %%%',
-              '%%% END ENTRIES %%%',
-              '%%% MCX PATHS %%%',
-              'matlabroot,''\toolbox\mcx\mcxlab;'','+
-              'matlabroot,''\toolbox\mcx\mmclab;'','+
-              'matlabroot,''\toolbox\mcx\mcxlabcl;'','+
-              'matlabroot,''\toolbox\mcx\iso2mesh;'','+
-              'matlabroot,''\toolbox\mcx\redbird\matlab;'','+
-              'matlabroot,''\toolbox\mcx\mcxtools;'','+
-              'matlabroot,''\toolbox\mcx\mmctools;'','+' ... %%% MCX PATHS %%%'
-           );
+    if CurStep <> ssPostInstall then exit;
+    // the entries go at the end, so nothing of the system's is shadowed --
+    // mmc included, as Windows has its own mmc.exe (Management Console)
+    if IsTaskSelected('envPath') then
+      EnvUpdate('Path', SuiteBinDirs, True);
+    RemoveLegacyPathdef;
+    if IsTaskSelected('addMATLABPath') then begin
+      EnvUpdate('MATLABPATH', ToolboxPaths, True);
+      EnvUpdate('OCTAVE_PATH', ToolboxPaths, True);
     end;
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 begin
     if CurUninstallStep = usPostUninstall then begin
-      EnvRemovePath(ExpandConstant('{app}'));
-      EnvRemovePath(ExpandConstant('{app}') +'\MCXSuite\mcx\bin');
-      EnvRemovePath(ExpandConstant('{app}') +'\MCXSuite\mmc\bin');
-      EnvRemovePath(ExpandConstant('{app}') +'\MCXSuite\mcxcl\bin');
-      EnvRemovePath(ExpandConstant('{app}') +'\MCXSuite\vkmmc\bin');
-      EnvRemovePath(ExpandConstant('{app}') +'\MCXSuite\umcx\bin');
+      EnvUpdate('Path', SuiteBinDirs, False);
+      EnvUpdate('MATLABPATH', ToolboxPaths, False);
+      EnvUpdate('OCTAVE_PATH', ToolboxPaths, False);
       InitializeSetup();
-      DeleteLineInTemplate(MatlabToolboxLocalPath+'\local\pathdef.m',
-              '%%% BEGIN ENTRIES %%%',
-              '%%% END ENTRIES %%%',
-              '%%% MCX PATHS %%%'
-           );
+      RemoveLegacyPathdef;
     end;
 end;
-

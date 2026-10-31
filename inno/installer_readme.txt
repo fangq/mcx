@@ -70,11 +70,18 @@ What else was installed
   MCXSuite\<simulator>\bin
         mcx, mcxcl, mmc, vkmmc and umcx, for use from a terminal
         or script. If you kept "Add to PATH variable", they can
-        be run from any new command prompt.
-  MATLAB toolboxes
-        mcxlab, mcxlabcl, mmclab, iso2mesh, redbird and zmat, in
-        the "mcx" folder of your MATLAB toolbox directory; with
-        "Add toolbox paths to MATLAB", MATLAB finds them on start.
+        be run from any new command prompt. Windows has an mmc of
+        its own (the Management Console), which comes first: run
+        MMC by its full path, MCXSuite\mmc\bin\mmc, or with photon.
+  MATLAB
+        the MATLAB/Octave toolboxes mcxlab, mcxlabcl, mmclab,
+        iso2mesh, redbird and zmat. If you kept "Add the toolboxes
+        to the MATLAB and Octave paths", every MATLAB and Octave
+        started from now on finds them, with no addpath needed:
+        they are listed in the MATLABPATH and OCTAVE_PATH
+        environment variables (yours, or every user's for an
+        install for all users), and taken out again on uninstall.
+        The Octave toolboxes need Octave 10 or later.
   photon
         a single command-line launcher for mcx, mcxcl and mmc
         (needs Perl); "photon --info" explains it.
