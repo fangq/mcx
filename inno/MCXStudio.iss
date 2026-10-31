@@ -169,7 +169,7 @@ const
   UserEnvKey = 'Environment';
   // the toolbox folders under {app}\MATLAB put on MATLABPATH and OCTAVE_PATH;
   // each one's PKG_ADD finds its Octave mex files under octave\<arch>
-  ToolboxDirs = 'mcxlab;mcxlabcl;mmclab;iso2mesh;zmat;redbird\matlab;mcxtools;mmctools';
+  ToolboxDirs = 'mcxlab;mcxlabcl;mmclab;umcxlab;iso2mesh;zmat;redbird\matlab;mcxtools;mmctools';
 
 // codes to finding MATLAB's installation path is derived from
 // https://stackoverflow.com/a/46283761/4271392; only used to take out the

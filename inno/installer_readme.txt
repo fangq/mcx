@@ -78,9 +78,9 @@ What else was installed
         MMC by its full path, MCXSuite\mmc\bin\mmc, or with photon.
   MATLAB
         the MATLAB/Octave toolboxes mcxlab, mcxlabcl, mmclab,
-        iso2mesh, redbird and zmat. If you kept "Add the toolboxes
-        to the MATLAB and Octave paths", every MATLAB and Octave
-        started from now on finds them, with no addpath needed:
+        umcxlab, iso2mesh, redbird and zmat. If you kept "Add the
+        toolboxes to the MATLAB and Octave paths", every MATLAB and
+        Octave started from now on finds them, with no addpath needed:
         they are listed in the MATLABPATH and OCTAVE_PATH
         environment variables (yours, or every user's for an
         install for all users), and taken out again on uninstall.
