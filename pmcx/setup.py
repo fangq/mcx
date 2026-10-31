@@ -127,7 +127,7 @@ purepython = os.environ.get("PMCX_PURE_PYTHON", "0") == "1"
 setup(
     name="pmcx",
     packages=["pmcx"],
-    version="0.7.3",
+    version="0.8.0",
     requires=["numpy"],
     license="GPLv3+",
     author="Matin Raayai Ardakani, Qianqian Fang, Fan-Yu Yen",
@@ -152,7 +152,9 @@ setup(
         "NVIDIA",
         "CUDA",
     ],
-    ext_modules=[] if purepython else [CMakeExtension("_pmcx", target="_pmcx", source_dir="../src/")],
+    ext_modules=[]
+    if purepython
+    else [CMakeExtension("_pmcx", target="_pmcx", source_dir="../src/")],
     cmdclass={} if purepython else {"build_ext": CMakeBuild},
     zip_safe=False,
     python_requires=">=3.6",
