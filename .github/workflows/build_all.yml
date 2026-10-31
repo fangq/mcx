@@ -297,9 +297,14 @@ jobs:
             make AR=g++ BACKEND=cudastatic USERLINKOPT='lib/libzmat.a -Wl,-Bstatic -lgomp -Wl,-Bdynamic'
             ldd ../bin/mcx
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
-            mkdir build && cd build && cmake .. -DCMAKE_CXX_ARCHIVE_CREATE="<CMAKE_AR> cr <TARGET> <LINK_FLAGS> <OBJECTS>" -DCMAKE_RANLIB="" && make VERBOSE=1 && cd ..
+            # Homebrew's libomp.dylib is not on the users' Macs: link its static libomp.a
+            mkdir build && cd build && cmake .. -DCMAKE_CXX_ARCHIVE_CREATE="<CMAKE_AR> cr <TARGET> <LINK_FLAGS> <OBJECTS>" -DCMAKE_RANLIB="" \
+                -DOpenMP_C_LIB_NAMES=omp -DOpenMP_CXX_LIB_NAMES=omp -DOpenMP_omp_LIBRARY=/usr/local/lib/libomp.a && make VERBOSE=1 && cd ..
             otool -L ../bin/mcx
             otool -L ../mcxlab/mcx.mex*
+            if otool -L ../bin/mcx ../mcxlab/mcx.mexmaci64 | grep -E "^\s+(/opt/homebrew|/usr/local)"; then
+                echo "mcx or its MATLAB mex links a library of the build machine"; exit 1
+            fi
           else
             make static
             objdump -p ../bin/mcx.exe | grep "DLL Name:"
