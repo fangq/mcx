@@ -136,13 +136,13 @@ def preview(cfg, **kwargs):
     length = len(cfg)
     hs = [None] * length
 
-    # Save random state
-    rngstate = np.random.get_state()
-
-    # Set random seed for consistent colors
-    randseed = 0x623F9A9E
-    np.random.seed(randseed)
-    surfcolors = np.random.rand(1024, 3)
+    # a fixed color for each label, the same as mcxpreview.m: a golden-ratio sequence
+    # rather than seeded random numbers, so numpy's random state is left untouched
+    surfcolors = np.mod(
+        np.arange(1, 1025)[:, None]
+        * np.array([0.618033988749895, 0.414213562373095, 0.732050807568877]),
+        1,
+    )
 
     # Check if we need to hold plots
     isholdplot = plt.isinteractive()
@@ -248,12 +248,16 @@ def preview(cfg, **kwargs):
         if "srcpos" not in cfg[i] or "srcdir" not in cfg[i]:
             raise ValueError("cfg.srcpos or cfg.srcdir is missing")
 
-        srcpos = np.array(cfg[i]["srcpos"]) * voxelsize
-        hsrc = plotmesh(
-            np.atleast_2d(srcpos[:3]), "r*"
-        )  # plotmesh takes one node per row
+        # one row of srcpos per source; a single srcdir/srcparam1/srcparam2 row is shared
+        srcpos = (
+            np.atleast_2d(np.array(cfg[i]["srcpos"], dtype=float))[:, :3] * voxelsize
+        )
+        nsrc = srcpos.shape[0]
+        srcdir = np.atleast_2d(np.array(cfg[i]["srcdir"], dtype=float))
+        srcdir = srcdir[np.minimum(np.arange(nsrc), srcdir.shape[0] - 1), :3]
+        hsrc = plotmesh(srcpos, "r*")  # plotmesh takes one node per row
 
-        srcvec = np.array(cfg[i]["srcdir"]) * 10 * voxelsize
+        srcvec = srcdir * 10 * voxelsize
         headsize = 1e2
 
         # Use matplotlib's quiver for 3D arrow
@@ -261,45 +265,45 @@ def preview(cfg, **kwargs):
             plt.gca()
         )  # the 3-D axes created by plotmesh; gca() takes no arguments in matplotlib>=3.6
         hdir = ax.quiver(
-            srcpos[0],
-            srcpos[1],
-            srcpos[2],
-            srcvec[0],
-            srcvec[1],
-            srcvec[2],
+            srcpos[:, 0],
+            srcpos[:, 1],
+            srcpos[:, 2],
+            srcvec[:, 0],
+            srcvec[:, 1],
+            srcvec[:, 2],
             linewidth=3,
             color="r",
             arrow_length_ratio=headsize / 100,
             **kwargs
         )
 
-        # Rendering area-source aperture
+        def srcrow(name, isrc):
+            row = np.atleast_2d(np.array(cfg[i][name], dtype=float))
+            return row[min(isrc, row.shape[0] - 1)]
+
+        # Rendering area-source aperture, one per source
         hsrcarea = []
-        if "srctype" in cfg[i]:
-            if cfg[i]["srctype"] in ["disk", "gaussian", "zgaussian", "ring"]:
+        srctype = cfg[i].get("srctype", "")
+        for isrc in range(nsrc):
+            sp = srcpos[isrc]
+            sd = srcdir[isrc]
+            if srctype in ["disk", "gaussian", "zgaussian", "ring"]:
                 if "srcparam1" not in cfg[i]:
                     raise ValueError("cfg.srcparam1 is missing")
+                p1 = srcrow("srcparam1", isrc)
 
-                ncyl, fcyl = meshacylinder(
-                    srcpos,
-                    srcpos + np.array(cfg[i]["srcdir"][:3]) * 1e-5,
-                    cfg[i]["srcparam1"][0] * voxelsize,
-                    0,
-                    0,
-                )
-                hsrcarea = plotmesh(ncyl, fcyl[-1], facecolor="r", linewidth=0)
+                ncyl, fcyl = meshacylinder(sp, sp + sd * 1e-5, p1[0] * voxelsize, 0, 0)
+                hsrcarea.append(plotmesh(ncyl, fcyl[-1], facecolor="r", linewidth=0))
 
-                if len(cfg[i]["srcparam1"]) > 1 and cfg[i]["srcparam1"][1] > 0:
+                if len(p1) > 1 and p1[1] > 0:
                     ncyl, fcyl = meshacylinder(
-                        srcpos,
-                        srcpos + np.array(cfg[i]["srcdir"][:3]) * 1e-5,
-                        cfg[i]["srcparam1"][1] * voxelsize,
-                        0,
-                        0,
+                        sp, sp + sd * 1e-5, p1[1] * voxelsize, 0, 0
                     )
-                    hsrcarea = plotmesh(ncyl, fcyl[-1], facecolor="k", linewidth=0)
+                    hsrcarea.append(
+                        plotmesh(ncyl, fcyl[-1], facecolor="k", linewidth=0)
+                    )
 
-            elif cfg[i]["srctype"] in [
+            elif srctype in [
                 "planar",
                 "pattern",
                 "fourier",
@@ -309,31 +313,24 @@ def preview(cfg, **kwargs):
             ]:
                 if "srcparam1" not in cfg[i] or "srcparam2" not in cfg[i]:
                     raise ValueError("cfg.srcparam1 or cfg.srcparam2 is missing")
+                p1 = srcrow("srcparam1", isrc)[:3] * voxelsize
 
-                if cfg[i]["srctype"] in ["fourierx", "fourierx2d"]:
-                    vec2 = np.cross(
-                        cfg[i]["srcdir"], np.array(cfg[i]["srcparam1"][:3]) * voxelsize
-                    )
+                if srctype in ["fourierx", "fourierx2d"]:
+                    vec2 = np.cross(sd, p1)
                 else:
-                    vec2 = np.array(cfg[i]["srcparam2"][:3]) * voxelsize
+                    vec2 = srcrow("srcparam2", isrc)[:3] * voxelsize
 
-                srcparam1_scaled = np.array(cfg[i]["srcparam1"][:3]) * voxelsize
-                nrec = np.array(
-                    [[0, 0, 0], srcparam1_scaled, srcparam1_scaled + vec2, vec2]
-                )
+                nrec = np.array([[0, 0, 0], p1, p1 + vec2, vec2]) + np.tile(sp, (4, 1))
+                hsrcarea.append(plotmesh(nrec, [[0, 1, 2, 3, 0]]))
 
-                # Add source position to all points
-                nrec = nrec + np.tile(srcpos, (4, 1))
-                hsrcarea = plotmesh(nrec, [[0, 1, 2, 3, 0]])
-
-            elif cfg[i]["srctype"] == "pattern3d":
-                dim = cfg[i]["srcparam1"][:3]
+            elif srctype == "pattern3d":
+                dim = srcrow("srcparam1", isrc)[:3]
                 bbxno, bbxfc, *_ = latticegrid(
                     np.arange(0, dim[0] + 1, dim[0]),
                     np.arange(0, dim[1] + 1, dim[1]),
                     np.arange(0, dim[2] + 1, dim[2]),
                 )
-                srcpos_tiled = np.tile(cfg[i]["srcpos"][:3], (bbxno.shape[0], 1))
+                srcpos_tiled = np.tile(sp / voxelsize, (bbxno.shape[0], 1))
                 hbbx = plotmesh(
                     ((bbxno + srcpos_tiled) + offset) * voxelsize,
                     bbxfc,
@@ -341,17 +338,19 @@ def preview(cfg, **kwargs):
                     alpha=0.3,
                 )
 
-            elif cfg[i]["srctype"] in ["slit", "line"]:
+            elif srctype in ["slit", "line"]:
                 if "srcparam1" not in cfg[i]:
                     raise ValueError("cfg.srcparam1 is missing")
 
+                # from the source position along srcparam1, as in mcxpreview.m
                 line_points = np.array(
-                    [srcpos[:3], np.array(cfg[i]["srcparam1"][:3]) * voxelsize]
+                    [sp, sp + srcrow("srcparam1", isrc)[:3] * voxelsize]
                 )
-                hsrcarea = plotmesh(line_points, [[0, 1]], linewidth=3, color="r")
+                hsrcarea.append(plotmesh(line_points, [[0, 1]], linewidth=3, color="r"))
 
         # Rendering detectors
         hdet = []
+        hdetdir = None
         if "detpos" in cfg[i]:
             detpos_array = np.array(cfg[i]["detpos"])
             hdet = [None] * detpos_array.shape[0]
@@ -377,6 +376,26 @@ def preview(cfg, **kwargs):
                     x, y, z, alpha=0.3, color="g", linewidth=0
                 )
 
+            # detector directions, which the adjoint modes take from cfg.detdir
+            if "detdir" in cfg[i] and np.size(cfg[i]["detdir"]) > 0:
+                detvec = (
+                    np.atleast_2d(np.array(cfg[i]["detdir"], dtype=float))[:, :3]
+                    * 10
+                    * voxelsize
+                )
+                hdetdir = ax.quiver(
+                    detpos[:, 0],
+                    detpos[:, 1],
+                    detpos[:, 2],
+                    detvec[:, 0],
+                    detvec[:, 1],
+                    detvec[:, 2],
+                    linewidth=3,
+                    color="g",
+                    arrow_length_ratio=headsize / 100,
+                    **kwargs
+                )
+
         # Combining all handles
         hs[i] = {
             "bbx": hbbx,
@@ -385,10 +404,8 @@ def preview(cfg, **kwargs):
             "srcarrow": hdir,
             "srcarea": hsrcarea,
             "det": hdet,
+            "detarrow": hdetdir,
         }
-
-    # Restore random state
-    np.random.set_state(rngstate)
 
     return hs
 
@@ -444,8 +461,13 @@ def plotshapes(
     if hseg is None:
         hseg = []
 
-    # Parse JSON shapes
-    shapes = loadjson(jsonshape)
+    # Parse JSON shapes: the text itself, as cfg['shapes'] holds it, or a file name
+    if isinstance(jsonshape, str) and jsonshape.lstrip().startswith("{"):
+        import json
+
+        shapes = json.loads(jsonshape)
+    else:
+        shapes = loadjson(jsonshape)
 
     if offset is None:
         offset = 1
@@ -456,11 +478,12 @@ def plotshapes(
     if voxelsize is None:
         voxelsize = 1
 
-    # Save random state
-    rngstate = np.random.get_state()
-    randseed = 0x623F9A9E
-    np.random.seed(randseed)
-    surfcolors = np.random.rand(1024, 3)
+    # a fixed color for each tag, as in preview(): numpy's random state is left untouched
+    surfcolors = np.mod(
+        np.arange(1, 1025)[:, None]
+        * np.array([0.618033988749895, 0.414213562373095, 0.732050807568877]),
+        1,
+    )
 
     if "Shapes" in shapes:
         shapes_list = shapes["Shapes"]
@@ -659,9 +682,6 @@ def plotshapes(
 
             else:
                 raise ValueError("unsupported shape constructs")
-
-    # Restore random state
-    np.random.set_state(rngstate)
 
     return hseg
 

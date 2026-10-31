@@ -52,10 +52,9 @@ if (nargin < 5)
     voxelsize = 1;
 end
 
-rngstate = rand ('state');
-randseed = hex2dec('623F9A9E');
-rand('state', randseed);
-surfcolors = rand(1024, 3);
+% a fixed color for each tag, as in mcxpreview: a golden-ratio sequence, which leaves
+% the random number generator and its state untouched
+surfcolors = mod((1:1024)' * [0.618033988749895, 0.414213562373095, 0.732050807568877], 1);
 
 hold on;
 
@@ -160,5 +159,3 @@ end
 if (~isholdplot)
     hold off;
 end
-
-rand ('state', rngstate);

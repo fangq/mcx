@@ -41,11 +41,10 @@ if (nargout > 0)
     hs = cell(len, 1);
 end
 
-rngstate = rand ('state');
-
-randseed = hex2dec('623F9A9E');
-rand('state', randseed);
-surfcolors = rand(1024, 3);
+% a fixed color for each label: a golden-ratio sequence rather than seeded random
+% numbers, so the random number generator and its state are left untouched (rng()
+% is not in older MATLAB and Octave, and rand('state') switches to a legacy one)
+surfcolors = mod((1:1024)' * [0.618033988749895, 0.414213562373095, 0.732050807568877], 1);
 isholdplot = ishold;
 
 for i = 1:len
@@ -139,59 +138,72 @@ for i = 1:len
         error('cfg.srcpos or cfg.srcdir is missing');
     end
 
-    cfg(i).srcpos = cfg(i).srcpos;
-    srcpos = cfg(i).srcpos * voxelsize;
+    % one row of cfg.srcpos per source; a single srcdir/srcparam1/srcparam2 row is shared
+    srcpos = cfg(i).srcpos(:, 1:3) * voxelsize;
+    nsrc = size(srcpos, 1);
+    srcdir = cfg(i).srcdir(min(1:nsrc, end), :);
     hsrc = plotmesh(srcpos, 'r*');
     if (exist('mindim', 'var'))
-        srcvec = cfg(i).srcdir * mindim * 0.05;
+        srcvec = srcdir(:, 1:3) * mindim * 0.05;
     else
-        srcvec = cfg(i).srcdir * 10 * voxelsize;
+        srcvec = srcdir(:, 1:3) * 10 * voxelsize;
     end
     headsize = 1e2;
     if (isoctavemesh)
         headsize = 0.5;
     end
-    hdir = quiver3(srcpos(1), srcpos(2), srcpos(3), srcvec(1), srcvec(2), srcvec(3), 'linewidth', 3, 'color', 'r', 'MaxHeadSize', headsize, 'AutoScaleFactor', 1, varargin{:});
+    hdir = quiver3(srcpos(:, 1), srcpos(:, 2), srcpos(:, 3), srcvec(:, 1), srcvec(:, 2), srcvec(:, 3), 'linewidth', 3, 'color', 'r', 'MaxHeadSize', headsize, 'AutoScaleFactor', 1, varargin{:});
 
-    % rendering area-source aperature
+    % rendering area-source aperature, one per source
     hsrcarea = [];
     if (isfield(cfg(i), 'srctype'))
-        if (strcmp(cfg(i).srctype, 'disk') || strcmp(cfg(i).srctype, 'gaussian') || strcmp(cfg(i).srctype, 'zgaussian') || strcmp(cfg(i).srctype, 'ring'))
-            if (~isfield(cfg(i), 'srcparam1'))
-                error('cfg.srcparam1 is missing');
+        for is = 1:nsrc
+            sp = srcpos(is, :);
+            sd = srcdir(is, 1:3);
+            if (isfield(cfg(i), 'srcparam1'))
+                p1 = cfg(i).srcparam1(min(is, end), :);
             end
-            [ncyl, fcyl] = meshacylinder(srcpos, srcpos + cfg(i).srcdir(1:3) * 1e-5, cfg(i).srcparam1(1) * voxelsize, 0, 0);
-            hsrcarea = plotmesh(ncyl, fcyl{end - 1}, 'facecolor', 'r', 'linestyle', 'none');
-            if (cfg(1).srcparam1(2) > 0)
-                [ncyl, fcyl] = meshacylinder(srcpos, srcpos + cfg(i).srcdir(1:3) * 1e-5, cfg(i).srcparam1(2) * voxelsize, 0, 0);
-                hsrcarea = plotmesh(ncyl, fcyl{end - 1}, 'facecolor', 'k', 'linestyle', 'none');
+            if (isfield(cfg(i), 'srcparam2'))
+                p2 = cfg(i).srcparam2(min(is, end), :);
             end
-        elseif (strcmp(cfg(i).srctype, 'planar') || strcmp(cfg(i).srctype, 'pattern') || strcmp(cfg(i).srctype, 'fourier') || ...
-                strcmp(cfg(i).srctype, 'fourierx') || strcmp(cfg(i).srctype, 'fourierx2d') || strcmp(cfg(i).srctype, 'pencilarray'))
-            if (~isfield(cfg(i), 'srcparam1') || ~isfield(cfg(i), 'srcparam2'))
-                error('cfg.srcparam2 or cfg.srcparam2 is missing');
+            if (strcmp(cfg(i).srctype, 'disk') || strcmp(cfg(i).srctype, 'gaussian') || strcmp(cfg(i).srctype, 'zgaussian') || strcmp(cfg(i).srctype, 'ring'))
+                if (~isfield(cfg(i), 'srcparam1'))
+                    error('cfg.srcparam1 is missing');
+                end
+                [ncyl, fcyl] = meshacylinder(sp, sp + sd * 1e-5, p1(1) * voxelsize, 0, 0);
+                hsrcarea = [hsrcarea; plotmesh(ncyl, fcyl{end - 1}, 'facecolor', 'r', 'linestyle', 'none')];
+                if (p1(2) > 0)
+                    [ncyl, fcyl] = meshacylinder(sp, sp + sd * 1e-5, p1(2) * voxelsize, 0, 0);
+                    hsrcarea = [hsrcarea; plotmesh(ncyl, fcyl{end - 1}, 'facecolor', 'k', 'linestyle', 'none')];
+                end
+            elseif (strcmp(cfg(i).srctype, 'planar') || strcmp(cfg(i).srctype, 'pattern') || strcmp(cfg(i).srctype, 'fourier') || ...
+                    strcmp(cfg(i).srctype, 'fourierx') || strcmp(cfg(i).srctype, 'fourierx2d') || strcmp(cfg(i).srctype, 'pencilarray'))
+                if (~isfield(cfg(i), 'srcparam1') || ~isfield(cfg(i), 'srcparam2'))
+                    error('cfg.srcparam2 or cfg.srcparam2 is missing');
+                end
+                if (strcmp(cfg(i).srctype, 'fourierx') || strcmp(cfg(i).srctype, 'fourierx2d'))
+                    vec2 = cross(sd, p1(1:3) * voxelsize);
+                else
+                    vec2 = p2(1:3) * voxelsize;
+                end
+                nrec = [0 0 0; p1(1:3) * voxelsize; p1(1:3) * voxelsize + vec2; vec2];
+                hsrcarea = [hsrcarea; plotmesh(nrec + repmat(sp, [4, 1]), {[1 2 3 4 1]})];
+            elseif (strcmp(cfg(i).srctype, 'pattern3d'))
+                dim = p1(1:3);
+                [bbxno, bbxfc] = latticegrid(0:dim(1):dim(1), 0:dim(2):dim(2), 0:dim(3):dim(3));
+                hbbx = plotmesh(((bbxno + repmat(cfg(i).srcpos(is, 1:3), size(bbxno, 1), 1)) + offset) * voxelsize, bbxfc, 'facecolor', 'y', 'facealpha', 0.3);
+            elseif (strcmp(cfg(i).srctype, 'slit') || strcmp(cfg(i).srctype, 'line'))
+                if (~isfield(cfg(i), 'srcparam1'))
+                    error('cfg.srcparam1 is missing');
+                end
+                hsrcarea = [hsrcarea; plotmesh([sp; sp + p1(1:3) * voxelsize], [1 2], 'linewidth', 3, 'color', 'r')];
             end
-            if (strcmp(cfg(i).srctype, 'fourierx') || strcmp(cfg(i).srctype, 'fourierx2d'))
-                vec2 = cross(cfg(i).srcdir, cfg(i).srcparam1(1:3) * voxelsize);
-            else
-                vec2 = cfg(i).srcparam2(1:3) * voxelsize;
-            end
-            nrec = [0 0 0; cfg(i).srcparam1(1:3) * voxelsize; cfg(i).srcparam1(1:3) * voxelsize + vec2; vec2];
-            hsrcarea = plotmesh(nrec + repmat(srcpos(:)', [4, 1]), {[1 2 3 4 1]});
-        elseif (strcmp(cfg(i).srctype, 'pattern3d'))
-            dim = cfg(i).srcparam1(1:3);
-            [bbxno, bbxfc] = latticegrid(0:dim(1):dim(1), 0:dim(2):dim(2), 0:dim(3):dim(3));
-            hbbx = plotmesh(((bbxno + repmat(cfg(i).srcpos(1:3), size(bbxno, 1), 1)) + offset) * voxelsize, bbxfc, 'facecolor', 'y', 'facealpha', 0.3);
-        elseif (strcmp(cfg(i).srctype, 'slit') || strcmp(cfg(i).srctype, 'line'))
-            if (~isfield(cfg(i), 'srcparam1'))
-                error('cfg.srcparam1 is missing');
-            end
-            hsrcarea = plotmesh([srcpos(1:3); srcpos(1:3) + cfg(i).srcparam1(1:3) * voxelsize], [1 2], 'linewidth', 3, 'color', 'r');
         end
     end
 
     % rendering detectors
     hdet = [];
+    hdetdir = [];
     if (isfield(cfg(i), 'detpos'))
         hdet = zeros(size(cfg(i).detpos, 1), 1);
         detpos = cfg(i).detpos(:, 1:3) * voxelsize;
@@ -207,16 +219,23 @@ for i = 1:len
                             sz * detpos(id, 4) + (detpos(id, 3)), ...
                             'facealpha', 0.3, 'facecolor', 'g', 'linestyle', 'none');
         end
+        % detector directions, which the adjoint modes take from cfg.detdir
+        if (isfield(cfg(i), 'detdir') && ~isempty(cfg(i).detdir))
+            if (exist('mindim', 'var'))
+                detvec = cfg(i).detdir(:, 1:3) * mindim * 0.05;
+            else
+                detvec = cfg(i).detdir(:, 1:3) * 10 * voxelsize;
+            end
+            hdetdir = quiver3(detpos(:, 1), detpos(:, 2), detpos(:, 3), detvec(:, 1), detvec(:, 2), detvec(:, 3), 'linewidth', 3, 'color', 'g', 'MaxHeadSize', headsize, 'AutoScaleFactor', 1, varargin{:});
+        end
     end
 
     % combining all handles
     if (nargout > 0)
-        hs{i} = struct('bbx', hbbx, 'seg', hseg, 'src', hsrc, 'srcarrow', hdir, 'srcarea', hsrcarea, 'det', hdet);
+        hs{i} = struct('bbx', hbbx, 'seg', hseg, 'src', hsrc, 'srcarrow', hdir, 'srcarea', hsrcarea, 'det', hdet, 'detarrow', hdetdir);
     end
 end
 
 if (~isholdplot)
     hold off;
 end
-
-rand ('state', rngstate);
