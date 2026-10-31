@@ -45,6 +45,10 @@ Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
 ChangesEnvironment=true
+; a MATLAB or Octave that has loaded a toolbox's mex file holds it open; the
+; default filter (*.exe,*.dll,*.chm) misses those, and a silent install then
+; aborts on the locked file instead of offering to close the program
+CloseApplicationsFilter=*.exe,*.dll,*.chm,*.mex,*.mexw64
 ChangesAssociations=yes
 SetupIconFile=mcxstudio_2023.ico
 ShowLanguageDialog=yes
