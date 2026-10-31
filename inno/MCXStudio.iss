@@ -96,7 +96,9 @@ Source: "..\Python\*"; DestDir: "{app}\Python"; Flags: ignoreversion recursesubd
 Source: "..\MCXSuite\*"; DestDir: "{app}\MCXSuite"; Excludes: "AUTO_BUILD_*.log,mcxshow.*,mcxviewer.*,mcx\utils\*,mmc\matlab\*"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; the MATLAB/Octave toolboxes stay under {app}; MATLAB and Octave find them
 ; through MATLABPATH and OCTAVE_PATH, so no MATLAB install is written to
-Source: "..\MATLAB\*"; DestDir: "{app}\MATLAB"; Excludes: "AUTO_BUILD_*.log"; Flags: ignoreversion recursesubdirs createallsubdirs
+; (redbird's rbfemmatrix.mex, a Linux Octave build redbird used to track, is
+; left out: Octave on Windows takes it over rbfemmatrix.m and fails to load it)
+Source: "..\MATLAB\*"; DestDir: "{app}\MATLAB"; Excludes: "AUTO_BUILD_*.log,redbird\matlab\rbfemmatrix.mex"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\MCXSuite\mcx\utils\*"; DestDir: "{app}\MATLAB\mcxtools"; Excludes: "AUTO_BUILD_*.log"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\MCXSuite\mmc\matlab\*"; DestDir: "{app}\MATLAB\mmctools"; Excludes: "AUTO_BUILD_*.log"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
