@@ -1,93 +1,88 @@
 name: Release package quality test
+# the MCX Studio packages are built from the tagged builds by mcx2026.sh after the
+# tag is pushed, so this test is started by hand once they are online
 on:
-  push:
-    tags:
-      - '*'
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'package name: tests MCXStudio-<os>-<name>.zip'
+        default: 'github-latest'
+      folder:
+        description: 'folder under https://mcx.space/nightly/ that holds the packages, e.g. release/v2026'
+        default: 'github'
+
+env:
+  NAME: ${{ github.event.inputs.name || 'github-latest' }}
+  NIGHTLY_URL: https://mcx.space/nightly/${{ github.event.inputs.folder || 'github' }}
 
 jobs:
   release_test:
     name: Release package tests
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-22.04, ubuntu-24.04, macos-15-intel, macos-14, windows-2022]
+        include:
+          - os: ubuntu-22.04
+            pkg: linux-x64
+          - os: ubuntu-24.04
+            pkg: linux-x64
+          - os: macos-15-intel
+            pkg: macos-x64
+          - os: macos-14
+            pkg: macos-arm64
+          - os: windows-2022
+            pkg: windows-x64
     runs-on: ${{ matrix.os }}
     defaults:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v2
-      - name: Set env
-        run: echo "RELEASE_TAG=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-      - name: Download release package
+      - name: Install OpenCL (Linux only)
         if: ${{ runner.os == 'Linux' }}
         run: |
-          sudo apt-get update && sudo apt-get install -y octave ocl-icd-opencl-dev libpocl2 pocl-opencl-icd
-          curl -s -L -O https://mcx.space/nightly/linux64/MCXStudio-linux64-${{ env.RELEASE_TAG }}.zip
-          unzip -o MCXStudio-linux64-${{ env.RELEASE_TAG }}.zip
+          sudo apt-get update && sudo apt-get install -y ocl-icd-opencl-dev libpocl2 pocl-opencl-icd
           echo "POCL_EXTRA_BUILD_FLAGS=-cl-std=CL1.2" >> $GITHUB_ENV
           echo "POCL_KERNEL_CACHE=0" >> $GITHUB_ENV
-      - name: Install dependencies (MacOS only)
-        if: ${{ runner.os == 'macOS' && matrix.os != 'macos-14' }}
-        run: |
-          curl -L -o Octave-9.2-Intel.dmg --insecure https://github.com/octave-app/octave-app/releases/download/v9.2/Octave-9.2-Intel.dmg
-          xattr -c Octave-*.dmg
-          sudo hdiutil attach Octave-9.2-Intel.dmg
-          sudo cp -a /Volumes/Octave\ 9.2/Octave-9.2.app /Applications
-          sudo hdiutil detach /Volumes/Octave\ 9.2
-          rm -rf Octave-9.2-Intel.dmg
-          echo "/Applications/Octave-9.2.app/Contents/Resources/usr/Cellar/octave-octapp@9.2.0/9.2.0/bin" >> $GITHUB_PATH
-          curl -s -L -O https://mcx.space/nightly/macos64/MCXStudio-macos-x86_64-${{ env.RELEASE_TAG }}.zip
-          unzip -o MCXStudio-macos-x86_64-${{ env.RELEASE_TAG }}.zip
-      - name: Install dependencies (MacOS only)
-        if: ${{ runner.os == 'macOS' && matrix.os == 'macos-14' }}
-        run: |
-          brew install octave
-          curl -s -L -O https://mcx.space/nightly/macos64/MCXStudio-macos-arm64-${{ env.RELEASE_TAG }}.zip
-          unzip -o MCXStudio-macos-arm64-${{ env.RELEASE_TAG }}.zip
-      - name: Install dependencies (Windows only)
-        if: ${{ runner.os == 'Windows' }}
-        run: |
-          #choco install octave.portable --version=9.2.0
-          #echo 'C:\ProgramData\chocolatey\lib\octave.portable\tools\octave\mingw64\bin' >> $GITHUB_PATH
-          curl --retry 3 -kL https://ftpmirror.gnu.org/octave/windows/octave-9.2.0-w64.7z --output octave_9.2.7z
-          7z x octave_9.2.7z -ooctave -y
-          rm -rf octave_9.2.7z
-          echo "$PWD/octave/octave-9.2.0-w64/mingw64/bin" >> $GITHUB_PATH
-          curl -s -L -O https://mcx.space/nightly/win64/MCXStudio-win64-${{ env.RELEASE_TAG }}.zip
-          unzip -o MCXStudio-win64-${{ env.RELEASE_TAG }}.zip
-      - name: Install OpenCL.dll and static libraries (Windows only)
+      - name: Install OpenCL.dll (Windows only)
         if: ${{ runner.os == 'Windows' }}
         run: |
           vcpkg --triplet=x64-windows install opencl
           cp 'c:\vcpkg\packages\opencl_x64-windows\bin\OpenCL.dll' 'c:\Windows\System32'
+      - name: Download release package
+        run: |
+          curl -fsSL --retry 3 -o package.zip "$NIGHTLY_URL/MCXStudio-${{ matrix.pkg }}-$NAME.zip"
+          unzip -q -o package.zip
+          ls MCXStudio MCXStudio/MCXSuite MCXStudio/MATLAB
       - name: Test mcx
         if: ${{ matrix.os != 'macos-14' }}
         run: |
           cd MCXStudio/MCXSuite/mcx/bin
+          ./mcx --version
+          # the runners have no NVIDIA GPU
           ./mcx -L || true
-          ./mcx -Q || true
-          ./mcx -N || true
-          ./mcx -Q cube60b --dumpjson || true
-          cd ../test
-          ./testmcx.sh || true
+          ./mcx -Q cube60b --dumpjson
       - name: Test mcxcl
         run: |
-          cd MCXStudio/MCXSuite/mcxcl/test
-          ../bin/mcxcl -L || true
-          ../bin/mcxcl -Q cube60 || true
-          ../bin/mcxcl -Q cube60b || true
-          ./testmcx.sh || true
+          cd MCXStudio/MCXSuite/mcxcl/bin
+          ./mcxcl --version
+          ./mcxcl -L || true
+          ./mcxcl -Q cube60 -n 1e5 || true
+          ./mcxcl -Q cube60b -n 1e5 || true
       - name: Test mmc
         run: |
           cd MCXStudio/MCXSuite/mmc/bin
+          ./mmc --version
           ./mmc -L || true
-          ./mmc -Q dmmc-cube60 || true
-          ./mmc -Q dmmc-cube60b || true
-          ./mmc -Q dmmc-cube60 -G -1 -D P || true
-          ./mmc -Q dmmc-cube60b -G -1 -D P || true
-          ./mmc -Q edgeimmc -G -1 || true
-          ./mmc -Q nodeimmc -G -1 || true
-          ./mmc -Q faceimmc -G -1 || true
+          ./mmc -Q dmmc-cube60 -G -1 -n 1e5
+          ./mmc -Q dmmc-cube60b -G -1 -n 1e5
+          ./mmc -Q dmmc-cube60 -G -1 -D P -n 1e5
+          ./mmc -Q edgeimmc -G -1 -n 1e5
+          ./mmc -Q nodeimmc -G -1 -n 1e5
+          ./mmc -Q faceimmc -G -1 -n 1e5
+      - name: Test umcx
+        run: |
+          cd MCXStudio/MCXSuite/umcx/bin
+          ./umcx --bench cube60 -n 1e5
       - name: Set up MATLAB
         uses: matlab-actions/setup-matlab@v2
         with:
@@ -103,3 +98,8 @@ jobs:
         uses: matlab-actions/run-command@v2
         with:
           command: cd MCXStudio; mcxsuite_addpath; cd MATLAB/mmclab/example; disp(mmclab('gpuinfo')); demo_mmclab_basic; demo_example_meshtest; demo_example_replay; demo_wide_det; demo_photon_sharing;
+      - name: Run MATLAB umcxlab test
+        continue-on-error: true
+        uses: matlab-actions/run-command@v2
+        with:
+          command: cd MCXStudio; mcxsuite_addpath; res = umcxlab(mcxcreate('cube60')); disp(size(res.flux));
