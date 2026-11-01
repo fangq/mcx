@@ -9,6 +9,6 @@ Scope: machine
 Installers:
 - Architecture: x64
   InstallerUrl: https://mcx.space/nightly/release/v2026/MCXStudio-windows-x64-v2026-installer.exe
-  InstallerSha256: 324E9012CCB364440E1AFBDEDBA49CECCD5EA9E8F1E1F724BB451EA38E0E4535
+  InstallerSha256: 373B45BC40534686F31669D843E5F02DD34F17EF8CD55F62762ACDE2425C487A
 ManifestType: installer
 ManifestVersion: 1.10.0
