@@ -15,7 +15,7 @@ jobs:
     name: Build the macOS noarch wheel
     # macOS has no CUDA, so pmcx ships only its python utilities there (pmcxcl borrows them);
     # pip falls back to this py3-none-any wheel on any platform without a native pmcx wheel
-    runs-on: macos-14
+    runs-on: macos-15
     outputs:
       perform_pypi_upload: ${{ steps.perform_pypi_upload_check.outputs.perform_pypi_upload }}
     steps:

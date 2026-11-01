@@ -14,7 +14,7 @@ jobs:
   build_macos_wheels:
     if: false
     name: Build macOS wheels
-    runs-on: macos-14
+    runs-on: macos-15
     strategy:
       matrix:
         python_version: [ '3.12' ]

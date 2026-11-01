@@ -28,7 +28,7 @@ jobs:
             pkg: linux-x64
           - os: macos-15-intel
             pkg: macos-x64
-          - os: macos-14
+          - os: macos-15
             pkg: macos-arm64
           - os: windows-2022
             pkg: windows-x64
@@ -54,7 +54,7 @@ jobs:
           unzip -q -o package.zip
           ls MCXStudio MCXStudio/MCXSuite MCXStudio/MATLAB
       - name: Test mcx
-        if: ${{ matrix.os != 'macos-14' }}
+        if: ${{ matrix.os != 'macos-15' }}
         run: |
           cd MCXStudio/MCXSuite/mcx/bin
           ./mcx --version
@@ -93,7 +93,7 @@ jobs:
         with:
           command: cd MCXStudio; mcxsuite_addpath; cd MATLAB/mcxlabcl/examples; disp(mcxlabcl('gpuinfo')); demo_mcxlab_basic; demo_mcxlab_2d; demo_mcxlab_replay; demo_bc_det; demo_photon_sharing;
       - name: Run MATLAB mmclab test
-        if: ${{ matrix.os != 'macos-14' }}
+        if: ${{ matrix.os != 'macos-15' }}
         continue-on-error: true
         uses: matlab-actions/run-command@v2
         with:
