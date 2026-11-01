@@ -205,6 +205,16 @@ jobs:
         uses: matlab-actions/setup-matlab@v1
         with:
           release: R2022a
+      - name: Set the oldest macOS the binaries run on (MacOS only)
+        if: ${{ runner.os == 'macOS' }}
+        shell: bash
+        run: |
+          # clang otherwise records the runner's macOS (14 or 15) as the oldest the binaries and mex
+          # files start on; 11.0 is the first macOS on arm64, 10.15 the oldest the macos-15 Xcode
+          # targets for x86_64, as the wheels; mcx's CUDA 10.2 build uses
+          # Xcode 10, whose newest SDK is 10.14, so 10.14 for x86_64
+          if [ "$(uname -m)" = "arm64" ]; then T=11.0; else T=10.14; fi
+          echo "MACOSX_DEPLOYMENT_TARGET=$T" >> $GITHUB_ENV
       - name: Update RCS keywords
         run: |
           printf '\n[filter "rcs-keywords"]\n\tclean  = .git_filters/rcs-keywords.clean\n\tsmudge = .git_filters/rcs-keywords.smudge %f\n' >> .git/config
@@ -342,6 +352,20 @@ jobs:
               -v "$MLROOT:$MLROOT:ro" -e MATLAB_ROOT="$MLROOT" \
               -v "$OCTINC:/octinc:ro" -e OCTAVE_INCDIR=/octinc \
               mcx-linux-release-builder bash .github/linux_release_builder/build_mcx.sh
+      - name: Check the oldest macOS the binaries need (MacOS only)
+        if: ${{ runner.os == 'macOS' }}
+        shell: bash
+        run: |
+          fail=0
+          for f in bin/mcx mcxlab/mcx.mex mcxlab/mcx.mexmaci64 mcxlab/mcx.mexmaca64; do
+            [ -f "$f" ] || continue
+            minos=$(otool -l "$f" | awk '/LC_BUILD_VERSION/{b=1} b && $1=="minos"{print $2; exit} /LC_VERSION_MIN_MACOSX/{v=1} v && $1=="version"{print $2; exit}')
+            echo "$f needs macOS $minos"
+            if [ -z "$minos" ] || [ "$(printf '%s\n%s\n' "$minos" "$MACOSX_DEPLOYMENT_TARGET" | sort -V | tail -1)" != "$MACOSX_DEPLOYMENT_TARGET" ]; then
+              echo "  newer than $MACOSX_DEPLOYMENT_TARGET: it would not start on older macOS"; fail=1
+            fi
+          done
+          exit $fail
       - name: Create package folder
         run: |
           mkdir packages
