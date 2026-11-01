@@ -359,6 +359,8 @@ jobs:
           fail=0
           for f in bin/mcx mcxlab/mcx.mex mcxlab/mcx.mexmaci64 mcxlab/mcx.mexmaca64; do
             [ -f "$f" ] || continue
+            # a MATLAB mex gets the target MATLAB's mex sets, and loads only in a MATLAB that needs that macOS
+            case "$f" in *.mexmaci64|*.mexmaca64) echo "$f needs macOS $(otool -l "$f" | awk '$1=="minos"{print $2; exit}') (MATLAB's own)"; continue ;; esac
             minos=$(otool -l "$f" | awk '/LC_BUILD_VERSION/{b=1} b && $1=="minos"{print $2; exit} /LC_VERSION_MIN_MACOSX/{v=1} v && $1=="version"{print $2; exit}')
             echo "$f needs macOS $minos"
             if [ -z "$minos" ] || [ "$(printf '%s\n%s\n' "$minos" "$MACOSX_DEPLOYMENT_TARGET" | sort -V | tail -1)" != "$MACOSX_DEPLOYMENT_TARGET" ]; then
@@ -455,6 +457,9 @@ jobs:
           mkdir -p fpc/etc
           fpc/bin/fpcmkcfg -d basepath=$T/fpc/lib/fpc/3.2.2 -o fpc/etc/fpc.cfg
           echo "-XR$(xcrun --show-sdk-path)" >> fpc/etc/fpc.cfg
+          # the linker of Xcode 16 (macos-15) crashes on fpc 3.2.2's objects (ld: Segmentation fault: 11);
+          # its classic linker, while this Xcode still has it, links them as Xcode 15's did
+          if ld -ld_classic -v > /dev/null 2>&1; then echo "-k-ld_classic" >> fpc/etc/fpc.cfg; fi
           fetch lazarus-3.6-0.tar.gz "https://downloads.sourceforge.net/project/lazarus/Lazarus%20Zip%20_%20GZip/Lazarus%203.6/lazarus-3.6-0.tar.gz" \
                 e65b90367f63bf17cb7bf35f5be69c9ef704ca494e91d8c67d072e3373fab085
           tar -xzf lazarus-3.6-0.tar.gz
