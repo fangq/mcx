@@ -3,6 +3,8 @@
 Major updates are marked with a "*"
 
 == MCX v2026 (Lucky Lux - 3.0), FangQ <q.fang (a) neu.edu> ==
+ 2026-11-01 [f71f3e7] [release] bump pmcx to 0.8.1, with the 64-bit fixed-point output sums
+ 2026-11-01 [1034184]*[feat] 64-bit fixed-point output sums by default, make floatsum for the float sums
  2026-10-29 [7a672ee] [feat] -l none prints nothing, not even the progress bar, as cfg.flog='none'
  2026-10-29 [2cb88a1] [feat] cfg.flog='none' silences the log; 'NUL' and '/dev/null' stay accepted on every OS, refs fangq/mcx#280
  2026-10-29 [b521bfe]*[bug] cfg.flog: 'NUL' and '/dev/null' are the null device on every OS, refs fangq/mcx#280
