@@ -127,7 +127,7 @@ purepython = os.environ.get("PMCX_PURE_PYTHON", "0") == "1"
 setup(
     name="pmcx",
     packages=["pmcx"],
-    version="0.8.0",
+    version="0.8.1",
     requires=["numpy"],
     license="GPLv3+",
     author="Matin Raayai Ardakani, Qianqian Fang, Fan-Yu Yen",
