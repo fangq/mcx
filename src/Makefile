@@ -161,6 +161,10 @@ endif
 
 OUTPUTFLAG:=-o
 
+# the output is accumulated as exact 64-bit fixed-point integers, whose sums do not depend on the
+# order of the additions; "make floatsum" builds the float sums of the releases before v2026
+ACCUMOPT ?= -DUSE_FIXEDPOINT
+
 ##  Target section  ##
 
 kepler: fermi
@@ -201,7 +205,8 @@ posix:      CUCCOPT+=-DUSE_POSIX_RAND
 posix:      LINKOPT+=-DUSE_POSIX_RAND
 fast:       CUCCOPT+=-DUSE_XORSHIFT128P_RAND -use_fast_math
 fixed:      fermi
-fixed:      CUCCOPT+=-DUSE_FIXEDPOINT
+floatsum:   fermi
+floatsum:   ACCUMOPT=
 debugxor:   xor
 fermi fermimex fermioct:      xor
 fermimex fermioct: OUTPUTFLAG:=-output
@@ -209,7 +214,7 @@ fermimex fermioct: OUTPUTFLAG:=-output
 posix xoro fermi:      LINKOPT+=$(CUOMPLINK) "$(OMP)"
 
 debugxor:	CUCCOPT+=-DMCX_DEBUG
-fermi fermimex fermioct:     CUCCOPT+=-DSAVE_DETECTORS -use_fast_math $(CUGENCODE)
+fermi fermimex fermioct:     CUCCOPT+=-DSAVE_DETECTORS -use_fast_math $(CUGENCODE) $(ACCUMOPT)
 fermi fermimex fermioct: CUCCOPT+=-DMCX_TARGET_NAME='"Lucky Lux"'
 xorfermi:   xor
 xorofermi:  xoro
@@ -220,14 +225,17 @@ xorfermi:     CUCCOPT+=-DUSE_XORSHIFT128P_RAND
 
 half: fermi
 half: CUCCOPT+=-DUSE_HALF
+half: ACCUMOPT=
 half: CUGENCODE=-arch=sm_60
 
 double: fermi
 double: CUCCOPT+=-DUSE_DOUBLE
+double: ACCUMOPT=
 double: CUGENCODE=-arch=sm_60
 
 moredouble: fermi
 moredouble: CUCCOPT+=-DUSE_MORE_DOUBLE
+moredouble: ACCUMOPT=
 moredouble: CUGENCODE=-arch=sm_60
 
 static:     fermi

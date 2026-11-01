@@ -87,12 +87,14 @@ Notable new features include:
   loaded for replay
 * atomic accumulation is always used; `--atomic 0` is deprecated as it lost energy on
   modern GPUs at no speed benefit
-* exact output sums: `make fixed` (`-DUSE_FIXEDPOINT`) accumulates the output as 64-bit
-  fixed-point integers instead of a float with a second float buffer; the sums are exact
-  and independent of the order of the additions, so a run with `-A 0` is bit-reproducible,
-  and the output matches a double-precision build (the float buffers differ from it by up
-  to 7e-4 near the source); 1.13x (RTX 4090) and 1.26x (RTX 5090) faster on average over
-  13 built-in examples, and as fast on an RTX 2080 SUPER; it runs on every GPU MCX supports
+* exact output sums, now the default: the output is accumulated as 64-bit fixed-point
+  integers (`-DUSE_FIXEDPOINT`) instead of a float with a second float buffer; the sums are
+  exact and independent of the order of the additions, so a run with `-A 0` is
+  bit-reproducible, and the output matches a double-precision build (the float buffers
+  differ from it by up to 7e-4 near the source); 1.13x (RTX 4090) and 1.26x (RTX 5090)
+  faster on average over 13 built-in examples, and as fast on an RTX 2080 SUPER; it runs
+  on every GPU MCX supports. `make floatsum` (or `cmake -DUSE_FIXEDPOINT=OFF`) builds the
+  float sums of the releases before v2026
 * extended line sources for wedge/fan beams; detected photon scattering counts are
   now saved as unsigned integers to remove the 16777216 cap
 * about 10% speed gain in split-voxel MC (SVMC) by reducing register use
@@ -440,7 +442,7 @@ make                 # the mcx binary in ../bin, needs the CUDA toolkit
 make mex             # mcxlab: ../mcxlab/mcx.mexa64 (needs MATLAB's mex)
 make oct             # mcxlab for Octave: ../mcxlab/mcx.mex (needs mkoctfile)
 make unittest        # host unit tests, see Testing
-make fixed           # exact 64-bit fixed-point output sums (-DUSE_FIXEDPOINT)
+make floatsum        # float output sums, as before v2026 (default: 64-bit fixed point)
 ```
 
 Targets such as `make pascal`, `make turing` or `make ampere` (and `voltamex`,
@@ -461,9 +463,9 @@ cmake --build build
 
 -   **GPU memory**: the domain needs Nx\*Ny\*Nz bytes (1-byte labels) and the
     output needs Nx\*Ny\*Nz\*Ng\*4\*2 bytes, where Ng is the number of time gates
-    simulated at once (4 bytes per float, doubled to reduce round-off errors; a
-    `make fixed` build keeps one 8-byte integer instead). With the default autopilot,
-    MCX splits the time gates into as many runs as needed.
+    simulated at once (one 8-byte fixed-point integer per element; a `make floatsum`
+    build keeps two 4-byte floats instead, the second to reduce round-off errors).
+    With the default autopilot, MCX splits the time gates into as many runs as needed.
 -   **media plus detectors**: optical properties and detector positions are kept in
     the GPU's 64 kB constant memory, so their total count must stay below about 4000.
 -   **many media**: partial path lengths are kept in shared memory; with many

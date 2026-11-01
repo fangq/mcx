@@ -16,6 +16,12 @@ cmake_minimum_required(VERSION 3.5)
 project(mcx)
 
 option(USE_HIP "Build with HIP for AMD GPUs" OFF)
+# exact 64-bit fixed-point output sums (order-independent); OFF builds the float sums of the
+# releases before v2026, as "make floatsum" does
+option(USE_FIXEDPOINT "Accumulate the output as 64-bit fixed-point integers" ON)
+if(USE_FIXEDPOINT)
+    set(MCX_ACCUM_FLAG -DUSE_FIXEDPOINT)
+endif()
 option(BUILD_MEX "Build mex" ON)
 
 # GPU sources that will be compiled with CUDA or HIP
@@ -52,7 +58,7 @@ if(USE_HIP)
     # -ffast-math is the HIP counterpart of the CUDA build's -use_fast_math, less
     # its -ffinite-math-only: nvcc's flag keeps NaN/Inf semantics, and the kernel
     # relies on them (a NaN weight marks a thread that has no photon yet).
-    set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} -DUSE_HIP -DSAVE_DETECTORS -munsafe-fp-atomics -ffast-math -fno-finite-math-only")
+    set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} -DUSE_HIP -DSAVE_DETECTORS ${MCX_ACCUM_FLAG} -munsafe-fp-atomics -ffast-math -fno-finite-math-only")
 
     # Add USE_HIP define to C and C++ files as well (for header guards)
     add_compile_definitions(USE_HIP)
@@ -154,7 +160,7 @@ else()
         ${CUDA_NVCC_FLAGS};
         -g -lineinfo -Xcompiler -Wall -Xcompiler -O3 -arch=sm_50
         -DMCX_TARGET_NAME="Fermi MCX" -use_fast_math
-        -DSAVE_DETECTORS -Xcompiler -fPIC ${OMPFLAG}
+        -DSAVE_DETECTORS ${MCX_ACCUM_FLAG} -Xcompiler -fPIC ${OMPFLAG}
     )
 
     # Create mcx library
