@@ -458,8 +458,24 @@ jobs:
           fpc/bin/fpcmkcfg -d basepath=$T/fpc/lib/fpc/3.2.2 -o fpc/etc/fpc.cfg
           echo "-XR$(xcrun --show-sdk-path)" >> fpc/etc/fpc.cfg
           # the linker of Xcode 16 (macos-15) crashes on fpc 3.2.2's objects (ld: Segmentation fault: 11);
-          # its classic linker, while this Xcode still has it, links them as Xcode 15's did
-          if ld -ld_classic -v > /dev/null 2>&1; then echo "-k-ld_classic" >> fpc/etc/fpc.cfg; fi
+          # its classic linker (ld-classic, next to ld) links them as Xcode 15's did. fpc calls the
+          # ld of the Command Line Tools, which may lack ld-classic: use a toolchain that has it
+          LDDIR=
+          for d in "$(dirname "$(xcrun -f ld)")" /Library/Developer/CommandLineTools/usr/bin \
+                   /Applications/Xcode*.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin; do
+            if [ -x "$d/ld-classic" ] && [ -x "$d/ld" ]; then LDDIR=$d; break; fi
+          done
+          if [ -n "$LDDIR" ]; then
+            echo "linking with the classic linker of $LDDIR"
+            echo "-FD$LDDIR" >> fpc/etc/fpc.cfg
+            echo "-k-ld_classic" >> fpc/etc/fpc.cfg
+          else
+            xcode-select -p; ld -v 2>&1 | head -3
+            ls /Library/Developer/CommandLineTools/usr/bin | grep -i '^ld' || true
+            ls -d /Applications/Xcode*.app || true
+            echo "::error::no ld-classic in this runner's toolchains: fpc 3.2.2 objects crash the new linker"
+            exit 1
+          fi
           fetch lazarus-3.6-0.tar.gz "https://downloads.sourceforge.net/project/lazarus/Lazarus%20Zip%20_%20GZip/Lazarus%203.6/lazarus-3.6-0.tar.gz" \
                 e65b90367f63bf17cb7bf35f5be69c9ef704ca494e91d8c67d072e3373fab085
           tar -xzf lazarus-3.6-0.tar.gz
