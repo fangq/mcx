@@ -382,6 +382,9 @@ jobs:
             strip --strip-unneeded mcxlab/mcx.mex* || true
           fi
           [[ -f mcxlab/mcx.mex ]] && mv mcxlab/mcx.mex mcxlab/octave/${{ env.OCTAVE_ARCH }}
+          # the helper functions of utils/ as mcxlab's private folder: mcxlab.m calls mcxdetphoton,
+          # mcxpreview, mcxplotphotons and mcxsvmc, so the package works without utils/ on the path
+          rm -rf mcxlab/private && cp -a utils mcxlab/private
           if [[ "$RUNNER_OS" == "Windows" ]]; then
             cp 'C:\Windows\System32\vcomp140.dll' mcxlab
             7z a -tzip packages/mcxlab-${{ env.RELEASE_TAG }}.zip mcxlab
