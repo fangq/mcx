@@ -1,7 +1,9 @@
 name: Build+Upload the MCX Studio Windows installer
 
-# the Inno Setup installer of the whole MCX suite, made from the portable Windows
-# package that mcx2026.sh writes to nightly/github after the CI builds; dormant
+# the Inno Setup installers of the whole MCX suite, made from the portable Windows
+# packages that mcx2026.sh writes after the CI builds: MCXStudio-windows-x64-<name>.zip,
+# and the NVIDIA edition MCXStudio-nvidia-windows-x64-<name>.zip (mmc-trinity, with
+# the CUDA and OptiX backends of mmc), when that package exists; dormant
 # unless one of these starts it:
 #   - a push that changes inno/ (installs the github-latest package)
 #   - by hand:  gh workflow run inno.yml -R fangq/mcx -f name=v2026
@@ -16,19 +18,29 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'package name: installs MCXStudio-windows-x64-<name>.zip'
+        description: 'package name: installs MCXStudio[-nvidia]-windows-x64-<name>.zip'
         default: 'github-latest'
   repository_dispatch:
     types: [inno]
 
 env:
   NAME: ${{ github.event.inputs.name || github.event.client_payload.name || 'github-latest' }}
-  NIGHTLY_URL: https://mcx.space/nightly/github
+  NIGHTLY_URL: https://mcx.space/nightly
 
 jobs:
   build_installer:
-    name: Build the installer
+    name: Build the ${{ matrix.bundle }} installer
     runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - bundle: MCXStudio
+            edition: ''
+          - bundle: MCXStudio-nvidia
+            edition: ' (NVIDIA)'
+    env:
+      PKG: ${{ matrix.bundle }}-windows-x64
     defaults:
       run:
         shell: bash
@@ -38,13 +50,31 @@ jobs:
         with:
           sparse-checkout: inno
       - name: Download the portable Windows package
+        id: package
         run: |
-          curl -fsSL --retry 3 -o package.zip "$NIGHTLY_URL/MCXStudio-windows-x64-$NAME.zip"
+          # nightly/github, or the release folder of a tagged release (where mcx2026.sh
+          # writes the NVIDIA edition of a release)
+          for url in "$NIGHTLY_URL/github/$PKG-$NAME.zip" "$NIGHTLY_URL/release/$NAME/$PKG-$NAME.zip"; do
+              curl -fsSL --retry 3 -o package.zip "$url" && echo "from $url" && break
+              rm -f package.zip
+          done
+          if [ ! -f package.zip ]; then
+              # the NVIDIA edition is made only when the mmclab-trinity package exists
+              if [ "${{ matrix.bundle }}" != MCXStudio ]; then
+                  echo "::notice::no $PKG-$NAME.zip, the ${{ matrix.bundle }} installer is skipped"
+                  echo "found=0" >> "$GITHUB_OUTPUT"
+                  exit 0
+              fi
+              echo "::error::no $PKG-$NAME.zip"
+              exit 1
+          fi
+          echo "found=1" >> "$GITHUB_OUTPUT"
           7z x -y -bd package.zip > /dev/null
           ls MCXStudio
           # the package leaves out inno/; the installer script of this commit is used
           cp -r inno MCXStudio/inno
       - name: Build the installer
+        if: steps.package.outputs.found == '1'
         run: |
           ISCC="/c/Program Files (x86)/Inno Setup 6/ISCC.exe"
           if [ ! -f "$ISCC" ]; then
@@ -70,13 +100,18 @@ jobs:
           done
           mkdir -p packages
           cd MCXStudio/inno
-          "$ISCC" //DMyAppVersion="$NAME" //O"$GITHUB_WORKSPACE\\packages" //F"MCXStudio-windows-x64-$NAME-installer" MCXStudio.iss
+          # the edition label, e.g. " (NVIDIA)", is shown after the version in the
+          # installer and in Apps & features; the standard edition keeps the default ""
+          EDITION=()
+          [ -n "${{ matrix.edition }}" ] && EDITION=("//DMyAppEdition=${{ matrix.edition }}")
+          "$ISCC" //DMyAppVersion="$NAME" "${EDITION[@]}" //O"$GITHUB_WORKSPACE\\packages" //F"$PKG-$NAME-installer" MCXStudio.iss
           ls -l "$GITHUB_WORKSPACE/packages"
       - name: Upload the installer
+        if: steps.package.outputs.found == '1'
         uses: actions/upload-artifact@v4
         with:
-          name: mcxstudio-installer
-          path: packages/MCXStudio-windows-x64-*-installer.exe
+          name: installer-${{ matrix.bundle }}
+          path: packages/${{ matrix.bundle }}-windows-x64-*-installer.exe
 
   upload_installer:
     name: Upload the installer
@@ -84,12 +119,13 @@ jobs:
     runs-on: ubuntu-22.04
     if: ${{ github.repository_owner == 'fangq' }}
     steps:
-      - name: Download the installer
+      - name: Download the installers
         uses: actions/download-artifact@v4
         with:
-          name: mcxstudio-installer
+          pattern: installer-*
+          merge-multiple: true
           path: packages
-      - name: Copy the installer to the server
+      - name: Copy the installers to the server
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
           server: ${{ secrets.MCX_SERVER }}

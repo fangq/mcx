@@ -14,6 +14,12 @@
 #ifndef MyAppVersion
   #define MyAppVersion "v2026"
 #endif
+; the NVIDIA edition, made from MCXStudio-nvidia-*.zip (mmc-trinity, with the
+; CUDA and OptiX backends of mmc), is built with /DMyAppEdition=" (NVIDIA)"; it
+; keeps the AppId and folder, so installing one edition replaces the other
+#ifndef MyAppEdition
+  #define MyAppEdition ""
+#endif
 #define MyAppPublisher "COTILab"
 #define MyAppURL "https://mcx.space"
 #define MyAppExeName "mcxstudio.exe"
@@ -26,7 +32,7 @@
 AppId={{0A4EBE79-4F72-4379-8C40-2A395E069EC8}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
-;AppVerName={#MyAppName} {#MyAppVersion}
+AppVerName={#MyAppName} {#MyAppVersion}{#MyAppEdition}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
