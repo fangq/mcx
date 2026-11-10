@@ -1,0 +1,53 @@
+name: Simulated GPU tests (PantheonSim)
+# the hosted runners have no GPU: PantheonSim (https://github.com/pantheongpu/pantheonsim)
+# runs the unmodified CUDA build on the CPU as a simulated NVIDIA H100, so the GPU kernel
+# is tested on every push; it checks what the kernel computes, not its speed, and does
+# not replace the tests on physical GPUs (test/testmcx.sh)
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  gpusim_test:
+    name: mcx tests on a simulated H100
+    runs-on: ubuntu-24.04
+    env:
+      VGPU_QUIET: 1  # no simulator banner, which "-l none" tests would see
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Set up PantheonSim and the CUDA toolkit
+        # pinned to a reviewed commit of the action and the simulator
+        uses: pantheongpu/pantheonsim@5938bb5abf6faef7761f9a4066a012565b3b486d
+        with:
+          gpu: nvidia/h100
+      - name: Install python modules for the trajectory tests
+        run: |
+          python3 -m pip install numpy jdata || python3 -m pip install --break-system-packages numpy jdata
+      - name: Build mcx
+        # the CUDA runtime is linked as a shared library, which the simulator supplies
+        run: |
+          cd src
+          make CUDART="-lcudart -ldl -lrt" CUGENCODE="-arch=sm_90"
+          ldd ../bin/mcx
+          ../bin/mcx -L
+      - name: Run unit tests, including a full simulation on the GPU
+        run: |
+          cd src
+          make unittest CUGENCODE="-arch=sm_90"
+      - name: Run step-by-step trajectory tests
+        # the simulator rounds single precision slightly differently from the hardware,
+        # so the trajectories are compared within the cross-solver tolerance
+        run: |
+          cd test
+          TOL=5e-2 GOLDENFORK=0.1 ./testtraj.sh
+      - name: Run the built-in examples against the golden absorbed fractions
+        # 1e3 photons per example: the tolerance is scaled by the photon number
+        run: |
+          cd test
+          NPHOTON=1e3 ./testbuiltin.sh
