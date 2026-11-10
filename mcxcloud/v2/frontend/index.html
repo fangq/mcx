@@ -28,6 +28,7 @@
     <h1 data-tab="home" title="home"><span class="mcxlogo">MCX&nbsp;Cloud</span> <small>v2</small></h1>
     <nav id="tabs">
       <button data-tab="browse"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Browse</span></button>
+      <button data-tab="llm" title="describe a simulation in plain language"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v2"/><path d="M5.6 5.6l1.4 1.4"/><path d="M18.4 5.6l-1.4 1.4"/><rect x="4" y="9" width="16" height="10" rx="2"/><circle cx="9" cy="14" r="1.3"/><circle cx="15" cy="14" r="1.3"/></svg><span>LLM</span></button>
       <button data-tab="create"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg><span>Create</span></button>
       <button data-tab="json"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>JSON</span></button>
       <button data-tab="preview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg><span>Preview</span></button>
@@ -49,6 +50,7 @@
     <section id="tab-home" class="tab active">
       <div class="home-grid">
         <button class="tile" data-tab="browse"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Browse</span><small>load a shared simulation</small></button>
+        <button class="tile" data-tab="llm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v2"/><path d="M5.6 5.6l1.4 1.4"/><path d="M18.4 5.6l-1.4 1.4"/><rect x="4" y="9" width="16" height="10" rx="2"/><circle cx="9" cy="14" r="1.3"/><circle cx="15" cy="14" r="1.3"/></svg><span>LLM</span><small>describe it in plain language</small></button>
         <button class="tile" data-tab="create"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg><span>Create</span><small>build an MCX input</small></button>
         <button class="tile" data-tab="json"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>JSON</span><small>edit the raw JSON</small></button>
         <button class="tile" data-tab="preview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg><span>Preview</span><small>3-D domain &amp; output</small></button>
@@ -89,6 +91,38 @@
           <div id="browse-results" class="cards"></div>
         </div>
         <aside id="browse-detail" hidden></aside>
+      </div>
+    </section>
+
+    <!-- LLM: prompt -> MCX input JSON (MCXLLM, server-side) -->
+    <section id="tab-llm" class="tab">
+      <p>Describe the simulation you want in plain language. The generated MCX input opens
+         in the <b>JSON</b> tab and fills the <b>Create</b> form, where you can edit it
+         before running.</p>
+      <textarea id="llm-prompt" spellcheck="false" placeholder="e.g. a 60x60x60 domain with a sphere of radius 15 at the center, mua 0.02 mus 10 g 0.9 n 1.37, pencil beam at 30 30 0 pointing in +z, 1e6 photons, fluence output"></textarea>
+      <div class="row">
+        <button id="llm-btn">Generate JSON</button>
+        <button id="llm-example" class="ghost" type="button" title="fill the prompt box with the example shown in it">Use example</button>
+        <label id="llm-model-row" hidden>Model <select id="llm-model"></select></label>
+        <small>Tab in the empty box to use the example · Ctrl+Enter to generate</small>
+      </div>
+      <!-- hosted models run on the user's own key; shown only when one is selected -->
+      <div id="llm-key-row" class="row" hidden>
+        <label>OpenAI API key
+          <input id="llm-key" type="password" autocomplete="off" spellcheck="false" placeholder="sk-…">
+        </label>
+        <small>Used only for this request and billed to your OpenAI account. It is sent to this
+          server, passed to OpenAI, and never stored. Get one at
+          <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com/api-keys</a>.</small>
+      </div>
+      <textarea id="llm-log" readonly></textarea>
+      <div class="llm-cite">
+        <p>If you use MCX-LLM in your work, please cite the following paper, which also
+          describes how the conversion works in detail:</p>
+        <p class="ref">F.-Y. Yen, Y. Liu, and Q. Fang, &ldquo;Using large language models for
+          enhancing accessibility for Monte Carlo photon transport simulations and beyond,&rdquo;
+          <i>bioRxiv</i> 2026.07.20.738933 (2026).
+          <a href="https://www.biorxiv.org/content/10.64898/2026.07.20.738933v1" target="_blank" rel="noopener">doi:10.64898/2026.07.20.738933</a></p>
       </div>
     </section>
 

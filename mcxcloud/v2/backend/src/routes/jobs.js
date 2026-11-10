@@ -8,6 +8,7 @@ import { mintToken, tokenHash } from '../tokens.js';
 import { validateInput, checkLimits } from '../schema.js';
 import { enqueueJob } from '../queue.js';
 import { publish, subscribe } from '../sse.js';
+import { clientIp } from '../net.js';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -41,15 +42,6 @@ async function authJob(id, token) {
 
 /** in-memory per-client submit throttle: client IP -> last submit ms */
 const lastSubmit = new Map();
-
-/** @param {import('fastify').FastifyRequest} req @returns {string} client IP */
-function clientIp(req) {
-  // Apache appends the connecting client's IP to X-Forwarded-For, so the LAST entry is the
-  // real client (a client-supplied X-Forwarded-For only adds spoofed entries before it).
-  const xff = /** @type {string} */ (req.headers['x-forwarded-for'] || '');
-  const parts = xff.split(',').map((s) => s.trim()).filter(Boolean);
-  return parts[parts.length - 1] || req.ip || 'unknown';
-}
 
 /** @param {import('fastify').FastifyInstance} app */
 export async function jobRoutes(app) {
