@@ -28,6 +28,7 @@ v2/
     normalization.md      # _DataLink_ content-addressed normalization & reassembly rules
   backend/                # Node + Fastify API, pg-boss scheduler, docker helpers, worker script, SQL migrations
     scripts/              #   migrate-v1-library.js (SQLite mcxpub -> Postgres library)
+    llm/                  #   mcxllm_bridge.py — prompt -> MCX JSON via MCXLLM (see DEPLOY.md §6)
   frontend/               # no-build ESM app (index.html + js/), see V2_DESIGN.md §8
   deploy/                 # docker-compose.yml (local bring-up) + Dockerfile.worker
   DEPLOY.md               # private-cloud setup, v1 import, smoke test, cutover

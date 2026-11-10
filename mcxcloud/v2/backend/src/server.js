@@ -10,6 +10,7 @@ import { jobRoutes } from './routes/jobs.js';
 import { libraryRoutes } from './routes/library.js';
 import { blobRoutes } from './routes/blobs.js';
 import { adminRoutes } from './routes/admin.js';
+import { llmRoutes } from './routes/llm.js';
 
 const app = Fastify({ logger: true, bodyLimit: 64 * 1024 * 1024 });
 
@@ -29,7 +30,9 @@ await app.register(jobRoutes);
 await app.register(libraryRoutes);
 await app.register(blobRoutes);
 await app.register(adminRoutes);
+await app.register(llmRoutes);
 if (!config.adminSecret) app.log.warn('ADMIN_SECRET unset — library review/admin API is disabled');
+if (!config.llmEnabled) app.log.warn('LLM_ENABLED != 1 — prompt-to-JSON (LLM tab) is disabled');
 
 // Queue + scheduler: submit enqueues; the scheduler consumes and dispatches to Swarm.
 try {

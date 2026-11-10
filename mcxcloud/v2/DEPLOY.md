@@ -137,6 +137,82 @@ API-only replicas with `RUN_SCHEDULER=0` and a single node with the scheduler en
 `MAX_CONCURRENT=0` auto-detects the swarm GPU count; `WORKER_NODE_CONSTRAINT` (e.g.
 `node.hostname==neza`) optionally pins dispatch to specific nodes.
 
+### Optional: prompt-to-JSON (the LLM tab)
+
+The **LLM** tab turns a plain-language description into an MCX input document. Conversion
+runs server-side via MCXLLM (an LLM + a pydantic/langchain post-processor), which lives in
+its own project and its own Python environment — `backend/llm/mcxllm_bridge.py` imports it
+rather than vendoring a copy. The API spawns one bridge process per request (~2 s for the
+langchain import, plus the model call). The method is described in
+<https://www.biorxiv.org/content/10.64898/2026.07.20.738933v1>, which the tab asks users to
+cite.
+
+```sh
+# in backend/.env
+LLM_ENABLED=1
+LLM_PYTHON=/path/to/miniconda3/envs/LLM_mcx/bin/python   # has langchain + openai + pydantic
+LLM_MCX_DIR=/path/to/LLM_mcx/.../performance_testing     # holds LLMMCX_gpt4o.py
+LLM_MIN_GAP_MS=10000                                     # each call costs money or a GPU slot
+
+# self-hosted backend — the FULL OpenAI-style chat URL of an ollama server or proxy
+LLM_OLLAMA_URL=https://neurojson.io/api/v1/ollama-public/chat
+LLM_OLLAMA_MODELS=qwen3.8:27b        # the neurojson proxy serves this one model, whatever is asked
+# or a raw ollama host:  LLM_OLLAMA_URL=http://shui:11434/v1   (/chat/completions is appended)
+#                        LLM_OLLAMA_MODELS=qwen3.8:27b   (comma-separate to offer several)
+# hosted backend — bring-your-own-key; '' hides it. No server-side key is needed or used.
+LLM_OPENAI_MODEL=gpt-4o
+# which (backend, model) is preselected
+LLM_BACKEND=ollama
+LLM_DEFAULT_MODEL=qwen3.8:27b
+```
+
+### Choosing a backend
+
+Both backends run the **same** MCXLLM code — the pydantic schema, prompt template and
+post-processor are model-agnostic, and both speak the OpenAI chat-completions format, so
+`mcxllm_bridge.py` only swaps how a completion is fetched (the OpenAI SDK for `openai`, a
+direct POST to `LLM_OLLAMA_URL` for `ollama` — the SDK can't target a proxy whose path
+isn't `/chat/completions`, such as neurojson.io's `/ollama-public/chat`). Every
+configured `(backend, model)` pair is offered in a dropdown in the LLM tab and chosen per
+request, which makes the UI usable for side-by-side comparison. `GET /llm/health` returns
+the list, so a frontend never offers a backend the server cannot serve.
+
+Measured on one prompt ("a 100x100x100 domain, two spheres, 1e7 photons, energy deposit"),
+qwen3.8:27b on a LAN ollama host vs gpt-4o:
+
+| backend | latency | result |
+|---|---|---|
+| `gpt-4o` | ~6 s | schema-valid, but `Domain.Dim` stayed `[60,60,60]` against a 100³ prompt |
+| `qwen3.8:27b` | ~12-24 s | schema-valid, `Domain.Dim` correct |
+
+So the hosted model is faster and the local one was more accurate on that prompt — one
+sample, not a benchmark, which is the reason the choice is exposed at runtime instead of
+baked in. Note `LLM_TIMEOUT_MS` must accommodate the slowest model plus a cold model load
+(the first request to an unloaded ollama model pays ~10 s extra).
+
+**OpenAI runs on the user's key, never the server's.** Selecting `gpt-4o` shows an API-key
+field; the key is sent with that one request (`apiKey` in the `POST /llm/generate` body),
+handed to the bridge on stdin — not argv or the environment — and redacted from any error
+text before it is logged or returned. The API strips every `OPENAI_*` variable from the
+bridge's environment, so an `OPENAI_API_KEY` that happens to be set on the server can never
+be billed for a user's request. Nothing stores the key: the browser keeps it only in the
+input box. With
+`LLM_ENABLED` unset the route answers 503 and the frontend **hides the tab** (it probes
+`GET /llm/health` at boot), so the same static frontend can serve an API without the Python
+side installed.
+
+Two behaviours worth knowing, both in `src/llm.js`:
+
+- **Schema defaults are filled in.** MCXLLM's `reorder_keys()` predates this schema and
+  omits `Session.DoAutoThread` and `Domain.OriginType`, which the editor marks required —
+  without the fill every generated input shows as invalid and Run refuses it. Only these
+  documented defaults are supplied.
+- **Contradictions are reported, not repaired.** MCXLLM sets `Shapes[].Grid.Size` from the
+  prompt but can leave `Domain.Dim` at its default `[60,60,60]`, so a prompt asking for a
+  100³ domain may yield a 60³ volume that clips the shapes. Both values validate on their
+  own, so the status box warns instead — quietly rewriting the model's answer would hide
+  the errors most worth seeing.
+
 ## 7. Expose the API over HTTPS (reverse proxy + TLS)
 
 The frontend runs from `https://mcx.space`, so the browser will **only** call the API over
