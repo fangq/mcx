@@ -30,6 +30,18 @@ is needed to run it; build it with "make unittest" under src/.
 extern "C" {
     int ntest = 0, nfail = 0;
     void run_utils_tests(void);  /* host tests of mcx_utils/mcx_shapes/mcx_mie in test_utils.c */
+
+    /** the number of CUDA (or HIP) devices the runtime reports, 0 on an error; a simulated
+        GPU, such as PantheonSim, has no /dev/nvidia* node but is listed here */
+    int ut_gpu_count(void) {
+        int count = 0;
+
+        if (cudaGetDeviceCount(&count) != cudaSuccess) {
+            count = 0;
+        }
+
+        return count;
+    }
 }
 
 /** the textbook unpolarized Fresnel reflectance, computed in double precision */

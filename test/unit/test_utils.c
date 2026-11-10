@@ -38,6 +38,27 @@ void Mie(double x, double mx, const double* mu, float4* smatrix, double* qsca, d
 void mcx_preprocess(Config* cfg);
 void mcx_loadseedjdat(char* filename, Config* cfg);
 int mcx_readarg(int argc, char* argv[], int id, void* output, const char* type);
+
+#ifndef MCX_OPENCL
+int ut_gpu_count(void);
+
+/** whether the GPU runtime lists a device; asked in a child process, because a
+    CUDA context created before fork() can not be used by the forked test runs */
+static int ut_has_gpu(void) {
+    int status = 0;
+    pid_t pid = fork();
+
+    if (pid == 0) {
+        exit(ut_gpu_count() > 0 ? 0 : 1);
+    }
+
+    if (pid < 0 || waitpid(pid, &status, 0) < 0) {
+        return 0;
+    }
+
+    return WIFEXITED(status) && WEXITSTATUS(status) == 0;
+}
+#endif
 void mcx_loadbenchmark(char* key, Config* cfg);
 #ifdef MCX_OPENCL
     void mcx_run_simulation(Config* cfg, float* fluence, float* totalenergy);
@@ -2577,7 +2598,7 @@ static void test_net_and_branches(void) {
 
     /* the library entry point that runs a JSON input on the GPU; skipped on a
        machine with no NVIDIA or AMD (ROCm) GPU device, as the CI runners are */
-    if (access("/dev/nvidia0", F_OK) == 0 || access("/dev/kfd", F_OK) == 0) {
+    if (ut_has_gpu()) {
         json = jq("{'Session':{'Photons':1000,'ID':'utrun','DoSaveVolume':0},'Forward':{'T0':0,'T1':1e-9,'Dt':1e-9}," JBASE_DOMAIN "," JBASE_SHAPES "," JBASE_OPTODE "}");
         EXPECT_EXIT_OK(mcx_run_from_json(json), "mcx_run_from_json runs a JSON input");
         free(json);

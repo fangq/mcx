@@ -19,11 +19,18 @@
 #            compare against, using REFTOL as the position (mm) and relative
 #            weight tolerance and MAXFORK as the maximum fraction of photons
 #            allowed to fork from the reference (see trajtest.py)
+#    TOL:    position (mm) and relative weight tolerance of the comparison with
+#            mcx's own golden files (default 1e-4); a simulated GPU (PantheonSim)
+#            rounds single precision a little differently, use 5e-2 there
+#    GOLDENFORK: maximum fraction of photons allowed to fork from mcx's own
+#            golden files (default 0)
 
 MCX=${MCX:-$(dirname "$0")/../bin/mcx}
 PYTHON=${PYTHON:-python3}
 REFTOL=${REFTOL:-5e-2}
 MAXFORK=${MAXFORK:-0.1}
+TOL=${TOL:-1e-4}
+GOLDENFORK=${GOLDENFORK:-0}
 UPDATE=0
 
 if [ "$1" = "-u" ]; then
@@ -67,7 +74,7 @@ for casefile in "$TESTDIR"/traj_cases/*.json; do
         mkdir -p "$TESTDIR/golden"
         "$PYTHON" "$TESTDIR/trajtest.py" "$WORKDIR/${case}_traj.jdt" --case "$casefile" --save "$golden" --solver mcx || fail=$((fail + 1))
     else
-        "$PYTHON" "$TESTDIR/trajtest.py" "$WORKDIR/${case}_traj.jdt" --case "$casefile" --ref "$golden" --tol 1e-4 --wtol 1e-4 --max-fork 0 || fail=$((fail + 1))
+        "$PYTHON" "$TESTDIR/trajtest.py" "$WORKDIR/${case}_traj.jdt" --case "$casefile" --ref "$golden" --tol "$TOL" --wtol "$TOL" --max-fork "$GOLDENFORK" || fail=$((fail + 1))
     fi
 
     if [ -n "$REF" ] && [ -f "$REF/$case.json" ]; then
