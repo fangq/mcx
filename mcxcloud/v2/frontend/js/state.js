@@ -14,6 +14,7 @@ const listeners = new Set();
  * @property {string|null} token
  * @property {string} status
  * @property {string} log
+ * @property {string} llmLog          status box of the LLM (prompt -> JSON) tab
  * @property {object|null} output      last output (parsed JNIfTI) for preview/download
  * @property {boolean} hasDetphoton
  * @property {object} user             { fullname, email, inst, netname }
@@ -28,6 +29,7 @@ const initial = {
   token: null,
   status: 'idle',
   log: '',
+  llmLog: '',
   output: null,
   hasDetphoton: false,
   user: {},

@@ -22,6 +22,48 @@ export async function fetchSchema() {
   return (await req('/schema/mcx-input.v1')).json();
 }
 
+// ---- LLM: natural-language prompt -> MCX input ------------------------------------------
+
+/**
+ * Which LLM backends this API offers. Older backends have no such route, so a missing
+ * endpoint counts as "not available" rather than an error.
+ * @returns {Promise<{ enabled: boolean, default?: string, defaultModel?: string, choices: { backend: string, model: string, host?: string, needsKey?: boolean }[] }>}
+ */
+export async function llmHealth() {
+  try {
+    const r = await fetch(API + '/llm/health');
+    if (!r.ok) return { enabled: false, choices: [] };
+    const j = await r.json();
+    return {
+      enabled: Boolean(j.enabled),
+      default: j.default,
+      defaultModel: j.defaultModel,
+      choices: j.choices || [],
+    };
+  } catch {
+    return { enabled: false, choices: [] }; // API unreachable — the caller hides the tab
+  }
+}
+
+/**
+ * Convert a natural-language description into an MCX input document.
+ * `valid` reports whether it passed the input schema; a failing doc is still returned so
+ * it can be repaired in the JSON tab.
+ * @param {string} prompt
+ * @param {{ backend: string, model: string }} [choice] which backend/model to use
+ * @param {string} [apiKey] the user's own OpenAI key, for choices marked `needsKey`
+ * @returns {Promise<{ doc: object, elapsed: number, backend: string, model: string, filled: string[], warnings: string[], valid: boolean, errors: string[] }>}
+ */
+export async function generateFromPrompt(prompt, choice, apiKey) {
+  return (
+    await req('/llm/generate', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ prompt, backend: choice?.backend, model: choice?.model, apiKey }),
+    })
+  ).json();
+}
+
 /**
  * Submit a simulation.
  * @param {object} doc @param {object} user

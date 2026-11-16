@@ -78,6 +78,24 @@ button.ghost { background: transparent; color: var(--ink); border-color: var(--l
 
 textarea { width: 100%; min-height: 220px; font-family: ui-monospace, monospace; font-size: 0.85rem; }
 #run-log { min-height: 260px; background: #0b1017; }
+/* LLM tab: a short prose prompt box above a Run-style status log */
+#llm-prompt { min-height: 110px; font-family: inherit; font-size: 0.95rem; }
+#llm-log { min-height: 200px; background: #0b1017; }
+/* "Model [select]" inline, so the select lines up with the buttons (labels stack by default) */
+#llm-model-row { display: flex; flex-direction: row; align-items: center; gap: 0.4rem; margin: 0; }
+#llm-model { width: auto; }
+#llm-key-row { align-items: flex-end; }
+#llm-key-row label { flex: 0 1 26rem; }
+#llm-key-row small { flex: 1 1 18rem; color: var(--muted); }
+#tab-llm a { color: var(--accent); }
+/* citation request under the LLM tab — visible, but quieter than the controls */
+.llm-cite {
+  margin: 0.8rem 0 0; padding: 0.6rem 0.8rem; font-size: 0.9rem; color: var(--muted);
+  border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 6px;
+  background: var(--panel);
+}
+.llm-cite p { margin: 0; }
+.llm-cite .ref { margin-top: 0.35rem; color: var(--ink); }
 
 .badge { font-size: 0.8rem; padding: 0.1rem 0.5rem; border-radius: 10px; }
 .badge.ok { background: var(--ok); color: #fff; }

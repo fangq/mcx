@@ -6,6 +6,7 @@ import { initEditor, setEditorValue } from './editor.js';
 import { initPreview, drawPreview } from './preview.js';
 import { initRun } from './run.js';
 import { initLibrary } from './library.js';
+import { initLlm } from './llm.js';
 
 let previewReady = false;
 
@@ -167,6 +168,7 @@ async function boot() {
   wireAutoOutput();
   initRun();
   initLibrary(showTab);
+  initLlm(showTab); // async: probes the API and hides the tab if it has no LLM
 
   try {
     const schema = stripMeshOnly(await fetchSchema());
