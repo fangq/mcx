@@ -18,8 +18,9 @@
  * @property {number} minSubmitGapMs    minimum gap between submissions from one client (ms)
  * @property {string} adminSecret       library review/admin API secret; '' disables it
  * @property {boolean} llmEnabled       serve POST /llm/generate (needs the Python side installed)
- * @property {string} llmPython         interpreter that has MCXLLM's deps (langchain, openai)
- * @property {string} llmMcxDir         directory holding LLMMCX_gpt4o.py
+ * @property {string} llmPython         interpreter with backend/llm/requirements.txt installed
+ * @property {string} llmMcxDir         another directory holding LLMMCX_gpt4o.py to use
+ *   instead of the copy in backend/llm/ ('' = that copy)
  * @property {number} llmTimeoutMs      hard cap on one prompt -> JSON conversion
  * @property {number} llmMinGapMs       minimum gap between generate calls from one client (ms)
  * @property {string} llmBackend        default backend id ('openai' | 'ollama')

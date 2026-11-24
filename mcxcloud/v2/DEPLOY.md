@@ -140,19 +140,28 @@ API-only replicas with `RUN_SCHEDULER=0` and a single node with the scheduler en
 ### Optional: prompt-to-JSON (the LLM tab)
 
 The **LLM** tab turns a plain-language description into an MCX input document. Conversion
-runs server-side via MCXLLM (an LLM + a pydantic/langchain post-processor), which lives in
-its own project and its own Python environment — `backend/llm/mcxllm_bridge.py` imports it
-rather than vendoring a copy. The API spawns one bridge process per request (~2 s for the
-langchain import, plus the model call). The method is described in
-<https://www.biorxiv.org/content/10.64898/2026.07.20.738933v1>, which the tab asks users to
-cite.
+runs server-side via MCXLLM (an LLM + a pydantic/langchain post-processor), in
+`backend/llm/`: `LLMMCX_gpt4o.py` and `LLMJson_post_gpt4o.py` are MCXLLM itself, and
+`mcxllm_bridge.py` connects it to the API. The API spawns one bridge process per request
+(~2 s for the langchain import, plus the model call). The method is described in F.-Y. Yen,
+Y. Liu, and Q. Fang,
+[J. Biomed. Opt. 31(11), 115003 (2026)](https://www.spiedigitallibrary.org/journals/journal-of-biomedical-optics/volume-31/issue-11/115003/Using-large-language-models-for-enhancing-accessibility-for-Monte-Carlo/10.1117/1.JBO.31.11.115003.short),
+which the tab asks users to cite.
+
+MCXLLM needs its own Python environment (langchain, openai, pydantic — pinned in
+`backend/llm/requirements.txt`), separate from the system python:
+
+```sh
+python3 -m venv /opt/mcxllm-venv
+/opt/mcxllm-venv/bin/pip install -r v2/backend/llm/requirements.txt
+```
 
 ```sh
 # in backend/.env
 LLM_ENABLED=1
-LLM_PYTHON=/path/to/miniconda3/envs/LLM_mcx/bin/python   # has langchain + openai + pydantic
-LLM_MCX_DIR=/path/to/LLM_mcx/.../performance_testing     # holds LLMMCX_gpt4o.py
-LLM_MIN_GAP_MS=10000                                     # each call costs money or a GPU slot
+LLM_PYTHON=/opt/mcxllm-venv/bin/python   # the environment above
+LLM_MIN_GAP_MS=10000                     # each call costs money or a GPU slot
+# LLM_MCX_DIR=/path/to/other/copy        # optional: use another LLMMCX_gpt4o.py than backend/llm/'s
 
 # self-hosted backend — the FULL OpenAI-style chat URL of an ollama server or proxy
 LLM_OLLAMA_URL=https://neurojson.io/api/v1/ollama-public/chat
