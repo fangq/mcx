@@ -1,0 +1,10 @@
+# Python packages for MCXLLM (LLMMCX_gpt4o.py + LLMJson_post_gpt4o.py) and mcxllm_bridge.py.
+# Install into a dedicated environment and point LLM_PYTHON (backend/.env) at its python:
+#   python3 -m venv /opt/mcxllm-venv
+#   /opt/mcxllm-venv/bin/pip install -r backend/llm/requirements.txt
+#   LLM_PYTHON=/opt/mcxllm-venv/bin/python
+# Pinned to the versions the method was developed and evaluated with.
+langchain==0.3.17
+langchain-core==0.3.33
+openai==1.61.0
+pydantic==2.10.6

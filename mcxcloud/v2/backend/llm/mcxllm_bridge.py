@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 """Bridge between the Fastify API and MCXLLM (natural-language prompt -> MCX input JSON).
 
-Runs under the interpreter that has MCXLLM's dependencies (langchain, openai, pydantic),
-which is NOT the API's runtime — see LLM_PYTHON / LLM_MCX_DIR in backend/.env. The API
-spawns one process per request (src/llm.js) and speaks a JSON envelope over stdin/stdout:
+Runs under the interpreter that has MCXLLM's dependencies (requirements.txt here), which is
+NOT the API's runtime — see LLM_PYTHON in backend/.env. The API spawns one process per
+request (src/llm.js) and speaks a JSON envelope over stdin/stdout:
 
     in :  {"prompt": "...", "backend": "openai"|"ollama", "model": "gpt-4o", "apiKey": "sk-..."}
     out:  {"ok": true,  "doc": {...}, "elapsed": 6.4, "backend": "...", "model": "..."}
           {"ok": false, "error": "...", "raw": "..."}
 
-MCXLLM is imported from LLM_MCX_DIR rather than vendored, so it stays in step with that
-project. Selecting a backend rebinds module globals that `LLMMCX` resolves at call time
-(`client`, `get_completion`), so no file there is edited:
+MCXLLM itself is the two files next to this one (LLMMCX_gpt4o.py, LLMJson_post_gpt4o.py);
+LLM_MCX_DIR, if set, points at another copy to use instead. Selecting a backend rebinds
+module globals that `LLMMCX` resolves at call time (`client`, `get_completion`), so MCXLLM
+needs no backend-specific edits:
 
   openai — a fresh OpenAI client on the user's key; the model name is pinned.
   ollama — `get_completion` is replaced by a direct POST to LLM_OLLAMA_URL, the full
@@ -134,9 +135,12 @@ def main():
         emit(False, error="the openai backend needs the user's API key")
         return 1
 
-    mcx_dir = os.environ.get("LLM_MCX_DIR", "")
-    if not mcx_dir or not os.path.isdir(mcx_dir):
-        emit(False, error="LLM_MCX_DIR is unset or not a directory: %r" % mcx_dir)
+    # The copy next to this file, unless LLM_MCX_DIR names another one.
+    mcx_dir = os.environ.get("LLM_MCX_DIR") or os.path.dirname(
+        os.path.abspath(__file__)
+    )
+    if not os.path.isfile(os.path.join(mcx_dir, "LLMMCX_gpt4o.py")):
+        emit(False, error="no LLMMCX_gpt4o.py in LLM_MCX_DIR=%r" % mcx_dir)
         return 1
     sys.path.insert(0, mcx_dir)
 
